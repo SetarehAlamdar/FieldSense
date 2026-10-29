@@ -1,0 +1,21 @@
+# Private data: lab records, survey boundaries, credentials. NEVER commit.
+private/
+*PRIVATE*
+.env
+*.netrc
+
+# Downloaded data and generated outputs (live in Google Drive, not in git)
+data_cache/
+profiles/
+demo/
+*.nc
+*.h5
+*.tif
+
+# Python / Jupyter
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
