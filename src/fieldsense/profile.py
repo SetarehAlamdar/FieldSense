@@ -6,18 +6,21 @@ This is the hand-off point between the data work (Lessons 1-5) and the product
 Rule: every number is stored with `evidence.value()`, i.e. a middle value, a range
 (low/high), a unit, what the range means, and the id of the evidence behind it.
 
-Schema version 0.1 (top-level keys):
-  schema, field, climate, soil, soil_moisture, history, cover, barcode, gaps
+Schema version 0.2 (top-level keys):
+  schema, field, climate, climate_odds, soil, soil_moisture, history, cover, barcode, gaps
+  0.1 -> 0.2 added `climate_odds` and more climate indicators; nothing was removed or renamed,
+  so a reader written for 0.1 still works (a backward-compatible change).
 """
 import json
 
 import numpy as np
 import pandas as pd
 
+from .climate import indicators_by_year, risk_counts
 from .evidence import value
 from .sources.soilgrids import carbon_stock_t_ha, usda_texture_class
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"   # 0.2: adds optional climate_odds (backward compatible)
 
 
 def _pct(series, q):
@@ -28,39 +31,42 @@ def climate_summary(weather, precip_col="PRECIP_CORR", years=None, rain_evidence
     """Year-to-year climate at the field: median (mid) and 10th-90th percentile (low/high).
 
     The range here is NATURAL VARIABILITY between years, not measurement error.
-    `weather`: daily table indexed by date (Lesson 2's weather_elora_corrected.csv).
-    Only complete years count (>= 360 days).
+    `weather`: daily table indexed by date. Only complete years count (>= 360 days).
+    The indicators themselves are computed in `climate.year_indicators` (one place only).
     """
-    w = weather.copy()
+    w = weather
     if years:
         w = w[(w.index.year >= years[0]) & (w.index.year <= years[1])]
-    full = w.groupby(w.index.year).size()
-    w = w[w.index.year.isin(full[full >= 360].index)]
-    yr = w.index.year
-    season = w[(w.index.month >= 5) & (w.index.month <= 9)]
-    annual_rain = w[precip_col].groupby(yr).sum()
-    season_rain = season[precip_col].groupby(season.index.year).sum()
-    gdd = (season["T2M"] - 10).clip(lower=0).groupby(season.index.year).sum()   # corn heat units, base 10 degC
-    mean_t = w["T2M"].groupby(yr).mean()
-
-    # Last spring frost and first fall frost (min temperature <= 0 degC), as day of year
-    frost = w[w["T2M_MIN"] <= 0]
-    last_spring = frost[frost.index.month <= 6].groupby(frost[frost.index.month <= 6].index.year).apply(lambda d: d.index.dayofyear.max())
-    first_fall = frost[frost.index.month >= 7].groupby(frost[frost.index.month >= 7].index.year).apply(lambda d: d.index.dayofyear.min())
-    frost_free = (first_fall - last_spring).dropna()
-
+    ind = indicators_by_year(w, rain=precip_col)
+    units = {
+        "annual_precip": ("mm", rain_evidence), "season_precip_may_sep": ("mm", rain_evidence),
+        "growing_degree_days_may_sep": ("degC-days (base 10)", temp_evidence), "mean_temperature": ("degC", temp_evidence),
+        "last_spring_frost_doy": ("day of year", temp_evidence), "first_fall_frost_doy": ("day of year", temp_evidence),
+        "frost_free_days": ("days", temp_evidence), "heat_days_pollination": ("days", temp_evidence),
+        "heavy_rain_days_spring": ("days", rain_evidence), "heavy_rain_days_year": ("days", rain_evidence),
+        "longest_dry_spell_summer": ("days", rain_evidence), "fall_gdd5_sep_nov": ("degC-days (base 5)", temp_evidence),
+    }
     pr = "10th-90th percentile across years"
-    def v(s, unit, ev):
-        return value(s.median(), _pct(s, 10), _pct(s, 90), unit, ev, pr)
+    out = {"years": [int(ind.index.min()), int(ind.index.max())]}
+    for col, (unit, ev) in units.items():
+        s = ind[col].dropna().astype(float)
+        out[col] = value(s.median(), _pct(s, 10), _pct(s, 90), unit, ev, pr)
+    return out
+
+
+def climate_odds(futures, history, risks=None, evidence=None, target_year=2026):
+    """Risks for next season as "X in 100 futures", next to how often they happened in real years.
+
+    Showing both keeps us honest: 100 futures are built from ~30 real years,
+    so "20 in 100" is really "about 6 of 30 past years, adjusted to today's warmth".
+    """
+    f, h = risk_counts(futures, risks), risk_counts(history, risks)
     return {
-        "years": [int(yr.min()), int(yr.max())],
-        "annual_precip": v(annual_rain, "mm", rain_evidence),
-        "season_precip_may_sep": v(season_rain, "mm", rain_evidence),
-        "growing_degree_days_may_sep": v(gdd, "degC-days (base 10)", temp_evidence),
-        "mean_temperature": v(mean_t, "degC", temp_evidence),
-        "last_spring_frost_doy": v(last_spring, "day of year", temp_evidence),
-        "first_fall_frost_doy": v(first_fall, "day of year", temp_evidence),
-        "frost_free_days": v(frost_free, "days", temp_evidence),
+        "target_year": target_year,
+        "n_futures": int(len(futures)),
+        "risks": {k: {"text": f[k]["text"], "futures": f"{f[k]['count']} in {f[k]['of']}",
+                      "past_years": f"{h[k]['count']} of {h[k]['of']}", "share": round(f[k]["count"] / max(f[k]["of"], 1), 3),
+                      "evidence": evidence or []} for k in f},
     }
 
 
@@ -98,7 +104,7 @@ def soil_moisture_summary(sm_daily, evidence=None):
 
 
 def build_field_profile(field, history, cover, climate=None, soil=None, soil_moisture=None,
-                        barcode_file=None, history_evidence=None, gaps=None):
+                        barcode_file=None, history_evidence=None, gaps=None, climate_odds=None):
     """Assemble the profile dict.
 
     field:   {"id", "name", "lat", "lon", "area_ha", ...}
@@ -123,6 +129,7 @@ def build_field_profile(field, history, cover, climate=None, soil=None, soil_moi
         "schema": SCHEMA_VERSION,
         "field": field,
         "climate": climate,
+        "climate_odds": climate_odds,
         "soil": soil,
         "soil_moisture": soil_moisture,
         "history": hist_rows,

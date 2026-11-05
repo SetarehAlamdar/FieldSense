@@ -16,6 +16,46 @@ import requests
 BULK_URL = "https://climate.weather.gc.ca/climate_data/bulk_data_e.html"
 
 
+COLUMNS = {"Max Temp": "tmax", "Min Temp": "tmin", "Mean Temp": "tmean", "Total Precip": "precip"}
+
+
+def get_eccc_daily(station_id, year):
+    """One year of daily weather from ECCC: tmax, tmin, tmean (degC), precip (mm).
+
+    Columns are matched by how their names START ("Max Temp (\u00b0C)" etc.), so an
+    encoding change in the degree sign can't break the download.
+    """
+    url = f"{BULK_URL}?format=csv&stationID={station_id}&Year={year}&Month=1&Day=1&timeframe=2&submit=Download+Data"
+    r = requests.get(url, timeout=60)
+    r.raise_for_status()
+    df = pd.read_csv(io.StringIO(r.content.decode("utf-8-sig")))
+    out = pd.DataFrame(index=pd.to_datetime(df["Date/Time"]))
+    for start, name in COLUMNS.items():
+        col = [c for c in df.columns if c.startswith(start)][0]
+        out[name] = pd.to_numeric(df[col], errors="coerce").values
+    out.index.name = "date"
+    return out
+
+
+def get_eccc_years(station_id, first_year, last_year, cache_dir="data_cache"):
+    """Daily ECCC weather for a range of years, downloaded once and cached as CSV."""
+    os.makedirs(cache_dir, exist_ok=True)
+    cache_file = os.path.join(cache_dir, f"eccc_{station_id}_daily_all_{first_year}_{last_year}.csv")
+    if os.path.exists(cache_file):
+        return pd.read_csv(cache_file, index_col=0, parse_dates=True)
+    table = pd.concat([get_eccc_daily(station_id, y) for y in range(first_year, last_year + 1)])
+    table.to_csv(cache_file)
+    return table
+
+
+def good_days(series, min_cover=0.9):
+    """Keep only days in months where at least `min_cover` of days were reported."""
+    s = series.copy()
+    g = s.groupby([s.index.year, s.index.month])
+    cover = g.transform("count") / g.transform("size")
+    return s[cover >= min_cover].dropna()
+
+
 def get_eccc_daily_precip(station_id, year):
     """One year of daily total precipitation (mm) from ECCC's bulk CSV service."""
     url = f"{BULK_URL}?format=csv&stationID={station_id}&Year={year}&Month=1&Day=1&timeframe=2&submit=Download+Data"

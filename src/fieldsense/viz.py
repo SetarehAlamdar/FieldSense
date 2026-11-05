@@ -46,3 +46,41 @@ def plot_field_barcode(matrix, title="", labels=None, ax=None, vmin=0.1, vmax=0.
         cb.outline.set_visible(False)
         fig.tight_layout()
     return fig
+
+
+def plot_odds_icons(odds, ncols=3, color="#c0392b"):
+    """Each risk as 100 squares, coloured squares = futures where it happens.
+
+    People read "23 in 100" (a count of things) more accurately than "23%" or "p = 0.23";
+    an icon array makes the count visible. Text below gives the matching count in real past years.
+    """
+    risks = odds["risks"]
+    n = len(risks)
+    nrows = int(np.ceil(n / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(3.6 * ncols, 4.6 * nrows))
+    for ax, (name, r) in zip(np.ravel(axes), risks.items()):
+        k = int(round(100 * r["share"]))
+        for i in range(100):
+            ax.add_patch(plt.Rectangle((i % 10, 9 - i // 10), 0.82, 0.82,
+                                       color=color if i < k else "#e3e3e3", lw=0))
+        ax.set_xlim(-0.2, 10); ax.set_ylim(-3.6, 10); ax.set_aspect("equal"); ax.axis("off")
+        ax.set_title(f"{k} in 100", loc="left", fontsize=13, fontweight="bold")
+        wrapped = "\n".join(_wrap(r["text"], 34))
+        ax.text(0, -0.4, f"{wrapped}\npast years: {r['past_years']}", va="top", fontsize=8.5, color="#333")
+    for ax in np.ravel(axes)[n:]:
+        ax.axis("off")
+    fig.suptitle(f"Next season ({odds['target_year']}): how often each risk happens across possible futures",
+                 x=0.02, ha="left", fontsize=12)
+    fig.tight_layout()
+    return fig
+
+
+def _wrap(text, width):
+    words, lines, line = text.split(), [], ""
+    for w in words:
+        if len(line) + len(w) + 1 > width:
+            lines.append(line)
+            line = w
+        else:
+            line = (line + " " + w).strip()
+    return lines + [line]
