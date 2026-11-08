@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fieldsense"
-version = "0.2.0"
+version = "0.3.0"
 description = "Field-level crop rotation decision support from NASA Earth observations"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -17,6 +17,9 @@ dev = ["pytest>=7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+fieldsense = ["data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

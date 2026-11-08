@@ -92,3 +92,8 @@ def test_frost_dates_skip_years_with_too_many_missing_days():
     s.loc["2020-03-01":"2020-05-31"] = np.nan                  # a spring with no readings
     fd = fs.frost_dates(s)
     assert list(fd.index) == [2019]
+
+
+def test_uninformative_risks_are_flagged():
+    counts = {"never": {"count": 0, "of": 100}, "useful": {"count": 30, "of": 100}, "always": {"count": 100, "of": 100}}
+    assert fs.uninformative_risks(counts) == ["never", "always"]

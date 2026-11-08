@@ -94,6 +94,7 @@ def year_indicators(d, rain="PRECIP_CORR", tmin="T2M_MIN", tmax="T2M_MAX", tmean
     spring_bare = _between(d, 4, 15, 6, 15)           # corn/soy fields mostly bare soil
     summer = _between(d, 6, 1, 8, 31)
     fall = _between(d, 9, 1, 11, 30)
+    after_soy = _between(d, 9, 25, 11, 30)            # cover crop sown right after soybean harvest
     return {
         "annual_precip": d[rain].sum(),
         "season_precip_may_sep": season[rain].sum(),
@@ -107,6 +108,7 @@ def year_indicators(d, rain="PRECIP_CORR", tmin="T2M_MIN", tmax="T2M_MAX", tmean
         "heavy_rain_days_year": int((d[rain] >= 25).sum()),
         "longest_dry_spell_summer": _longest_run((summer[rain] < 1).values),
         "fall_gdd5_sep_nov": (fall[tmean] - 5).clip(lower=0).sum(),
+        "fall_gdd5_after_soybean": (after_soy[tmean] - 5).clip(lower=0).sum(),
     }
 
 
@@ -127,8 +129,19 @@ RISKS = {
     "pollination_heat": ("heat_days_pollination", ">=", 3, "3+ days at or above 32 degC during corn pollination"),
     "heavy_rain_on_bare_soil": ("heavy_rain_days_spring", ">=", 1, "a 25 mm+ rain day while fields are bare (15 Apr-15 Jun)"),
     "summer_dry_spell": ("longest_dry_spell_summer", ">=", 14, "2+ weeks without rain in June-August"),
-    "short_fall_for_cover": ("fall_gdd5_sep_nov", "<", 300, "too little fall warmth for a cover crop sown 1 Sept to establish"),
+    "short_fall_after_soybean": ("fall_gdd5_after_soybean", "<", 150,
+                                 "too little fall warmth for a cover crop sown after soybean harvest (25 Sept)"),
+    # DEPRECATED (Lesson 7): at Elora this never happened in 30 years, so it can't inform a decision.
+    # Kept so profile readers written for schema 0.2 don't break; remove at schema 1.0.
+    "short_fall_for_cover": ("fall_gdd5_sep_nov", "<", 300,
+                             "(deprecated) too little fall warmth for a cover crop sown 1 Sept to establish"),
 }
+
+
+def uninformative_risks(counts, low=0.03, high=0.97):
+    """Risks that (almost) never or (almost) always happen. A risk that never varies
+    can't help choose between options: check its threshold before showing it."""
+    return [k for k, c in counts.items() if c["of"] and not (low <= c["count"] / c["of"] <= high)]
 _OPS = {">": np.greater, ">=": np.greater_equal, "<": np.less, "<=": np.less_equal}
 
 
