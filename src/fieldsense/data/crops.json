@@ -1,0 +1,37 @@
+{
+  "_about": "Crop calendar and traits for southern Ontario (Elora). Day-of-year windows are when the crop is clearly green (NDVI >= 0.4), not planting/harvest dates. All values are ASSUMED rules of thumb: check against the OMAFRA Agronomy Guide for Field Crops and, where possible, against satellite greenness (see the Lesson 7 validation).",
+  "crops": {
+    "corn": {
+      "name": "Grain corn", "family": "grass", "legume": false,
+      "green": [[165, 258]],
+      "sensitive_to": ["late_spring_frost", "pollination_heat", "early_fall_frost", "summer_dry_spell"],
+      "note": "Silking 10 Jul - 10 Aug is the heat-sensitive stage."
+    },
+    "soybean": {
+      "name": "Soybean", "family": "legume", "legume": true,
+      "green": [[176, 253]],
+      "sensitive_to": ["late_spring_frost", "early_fall_frost", "summer_dry_spell"],
+      "note": "Harvest around late September leaves a short window for a cover crop."
+    },
+    "winter_wheat": {
+      "name": "Winter wheat", "family": "grass", "legume": false,
+      "green": [[91, 186]],
+      "green_previous_fall": [[295, 334]],
+      "sensitive_to": [],
+      "note": "Sown in early October after soybean; harvested in July, before peak heat and summer dry spells. Wheat-specific risks (winterkill, wet-June disease) are not modelled."
+    }
+  },
+  "covers": {
+    "red_clover": {
+      "name": "Red clover (underseeded in wheat)", "legume": true,
+      "green_fall": [[227, 334]], "green_next_spring": [[91, 135]],
+      "note": "Frost-seeded into wheat in early spring; grows after wheat harvest; terminated before the next crop."
+    },
+    "cereal_rye": {
+      "name": "Cereal rye (after soybean)", "legume": false,
+      "green_fall": [[300, 334]], "green_next_spring": [[91, 130]],
+      "needs_fall_warmth": "short_fall_after_soybean",
+      "note": "Sown right after soybean harvest; overwinters; terminated before planting."
+    }
+  }
+}

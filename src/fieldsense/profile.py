@@ -6,10 +6,12 @@ This is the hand-off point between the data work (Lessons 1-5) and the product
 Rule: every number is stored with `evidence.value()`, i.e. a middle value, a range
 (low/high), a unit, what the range means, and the id of the evidence behind it.
 
-Schema version 0.2 (top-level keys):
-  schema, field, climate, climate_odds, soil, soil_moisture, history, cover, barcode, gaps
+Schema version 0.3 (top-level keys):
+  schema, field, climate, climate_odds, rotation_options, soil, soil_moisture, history, cover, barcode, gaps
   0.1 -> 0.2 added `climate_odds` and more climate indicators; nothing was removed or renamed,
   so a reader written for 0.1 still works (a backward-compatible change).
+  0.2 -> 0.3 added `rotation_options` (Lesson 7): the rotation comparison, ranking robustness
+  and five-part explanations. Also backward compatible.
 """
 import json
 
@@ -20,7 +22,7 @@ from .climate import indicators_by_year, risk_counts
 from .evidence import value
 from .sources.soilgrids import carbon_stock_t_ha, usda_texture_class
 
-SCHEMA_VERSION = "0.2"   # 0.2: adds optional climate_odds (backward compatible)
+SCHEMA_VERSION = "0.3"   # 0.3: adds optional rotation_options (backward compatible)
 
 
 def _pct(series, q):

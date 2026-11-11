@@ -3,10 +3,11 @@
 Light imports only: `import fieldsense as fs` must work without the satellite extras
 (rasterio, earthaccess). Data sources are imported from `fieldsense.sources.<name>`.
 """
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
+from . import rotation
 from .climate import (RISKS, apply_monthly_offsets, frost_dates, held_out_offset_check, indicators_by_year,
-                      make_futures, monthly_offsets, risk_counts, warming_trend)
+                      make_futures, monthly_offsets, risk_counts, uninformative_risks, warming_trend)
 from .correction import apply_monthly_scaling, factors_from, held_out_error, monthly_scaling_factors
 from .evidence import LABELS, Evidence, EvidenceRegistry, value
 from .phenology import barcode_matrix, cover_summary, crop_label, daily_ndvi, field_history
