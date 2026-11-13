@@ -1,6 +1,6 @@
 """NASA POWER: daily weather for any point on Earth, 1981 to near-present.
 
-From Lesson 1. POWER is a model-based product (MERRA-2 weather reanalysis + CERES
+POWER is a model-based product (MERRA-2 weather reanalysis + CERES
 satellite sunshine) on a ~0.5 x 0.625 degree grid (~50 km). Good for climate
 patterns; too coarse to tell neighbouring fields apart.
 

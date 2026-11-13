@@ -1,10 +1,10 @@
-"""Checks for fieldsense.rotation (Lesson 7).
+"""Checks for fieldsense.rotation.
 
 Two kinds of test here:
 - EXAMPLE tests: a known input with a known answer (corn-soybean repeats every 2 years).
 - PROPERTY tests: a rule that must hold for ANY input ("adding a cover crop never reduces
   living cover"). They don't need us to know the right number, so they're less exposed to
-  our own wrong assumptions, the Lesson 4 problem.
+  our own possibly wrong assumptions.
 """
 import numpy as np
 import pandas as pd

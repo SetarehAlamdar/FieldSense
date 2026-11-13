@@ -1,7 +1,7 @@
 """Automated checks. Run with:  pytest
 
 Each test builds a small, fake input where we KNOW the right answer, then checks the code
-gets it. Remember the Lesson 4 lesson: these tests catch code bugs, not wrong assumptions.
+gets it. Note: these tests catch code bugs, not wrong assumptions.
 Assumptions (like the wheat threshold) are checked against real ground truth instead.
 """
 import numpy as np

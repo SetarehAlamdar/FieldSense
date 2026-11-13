@@ -1,6 +1,6 @@
 """Rotation engine: compare crop rotations on soil cover, 2026 climate risk, nutrients and pests.
 
-Lesson 7. Design choices (each one is a trade-off you should be able to defend):
+Design choices (each one is a deliberate trade-off):
 
 1. DATA, NOT CODE, FOR AGRONOMY. Crop calendars and traits live in data/crops.json,
    so they can be checked and edited without touching Python.
@@ -13,7 +13,7 @@ Lesson 7. Design choices (each one is a trade-off you should be able to defend):
      come out best?" If one rotation wins under almost any weighting, the choice is robust.
 
 3. MEASURED BEATS MODELLED. For a field's CURRENT rotation we already measured soil cover
-   from the satellite barcode (Lesson 5). The calendar model is only needed for rotations
+   from the satellite barcode (phenology.py). The calendar model is only needed for rotations
    the field hasn't tried, and its error on the current rotation tells us how far to trust it.
 
 4. EXPLANATIONS ARE GENERATED FROM THE NUMBERS (templates, not free text), so the words
@@ -109,7 +109,7 @@ def climate_exposure(rot, odds, table=None):
     exposure(risk) = average over rotation years of  P(risk in a season) x (crop exposed? 1 : 0)
     Heavy rain on bare soil uses the bare SHARE of the spring window instead of 0/1.
     A cover crop that needs fall warmth is exposed to the short-fall risk.
-    `odds` = profile["climate_odds"] (Lesson 6).
+    `odds` = profile["climate_odds"] (see climate.py).
     """
     t = table or load_crop_table()
     p = {k: r["share"] for k, r in odds["risks"].items()}

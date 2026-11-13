@@ -1,6 +1,6 @@
 """Climate: yearly indicators, temperature correction, and 100 possible next seasons.
 
-Lesson 6. Three ideas:
+Three ideas:
 
 1. TEMPERATURE CORRECTION is ADDITIVE (rain was multiplicative). If POWER's nights are
    2 degC too warm, they're 2 degC too warm whether it's -10 or +10. Multiplying would
@@ -131,7 +131,7 @@ RISKS = {
     "summer_dry_spell": ("longest_dry_spell_summer", ">=", 14, "2+ weeks without rain in June-August"),
     "short_fall_after_soybean": ("fall_gdd5_after_soybean", "<", 150,
                                  "too little fall warmth for a cover crop sown after soybean harvest (25 Sept)"),
-    # DEPRECATED (Lesson 7): at Elora this never happened in 30 years, so it can't inform a decision.
+    # DEPRECATED: at Elora this never happened in 30 years, so it can't inform a decision.
     # Kept so profile readers written for schema 0.2 don't break; remove at schema 1.0.
     "short_fall_for_cover": ("fall_gdd5_sep_nov", "<", 300,
                              "(deprecated) too little fall warmth for a cover crop sown 1 Sept to establish"),

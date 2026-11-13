@@ -1,6 +1,6 @@
 """Bias correction: make a model's rainfall match ground truth, month by month.
 
-From Lesson 2. NASA POWER rainfall at Elora was ~25% too low. We multiply each day
+NASA POWER rainfall at Elora was ~25% too low. We multiply each day
 by its calendar month's factor:
 
     factor[July] = station's average July rain / POWER's average July rain  (same months)
@@ -8,7 +8,7 @@ by its calendar month's factor:
 This shifts the LEVEL of rainfall but keeps the PATTERN (which years were dry or wet),
 and the pattern is what the climate futures are built from.
 
-Key lesson: a correction always matches the data it was fitted on, so that proves
+Key point: a correction always matches the data it was fitted on, so that proves
 only that the code works. Validation needs held-out years (fit 1996-2010, test 2011-2025).
 """
 import pandas as pd

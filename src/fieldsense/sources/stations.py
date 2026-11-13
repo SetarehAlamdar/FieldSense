@@ -1,10 +1,10 @@
 """Environment and Climate Change Canada (ECCC) weather stations: ground truth for NASA POWER.
 
-From Lesson 2. We used two stations near Elora:
+Two stations near Elora are used:
   - Fergus Shand Dam (ID 4760): long manual record, the reference for the rainfall correction
   - Elora RCS (ID 41983): automatic Reference Climate Station, 2003-today, used as a cross-check
 
-Lesson learned: ground truth has errors too. Elora RCS reads ~12% lower than Fergus,
+Note: ground truth has errors too. Elora RCS reads ~12% lower than Fergus,
 mostly in winter, likely because automatic gauges under-catch blowing snow.
 """
 import io

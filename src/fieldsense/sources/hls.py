@@ -1,9 +1,9 @@
 """NASA HLS (Harmonized Landsat Sentinel-2): 30 m surface reflectance every 2-3 days.
 
-From Lesson 4. Images are Cloud-Optimized GeoTIFFs (COGs) in NASA's cloud, so we read
+Images are Cloud-Optimized GeoTIFFs (COGs) in NASA's cloud, so we read
 only the few kilobytes covering our fields, not the whole ~110 km tile.
 
-Two lessons built in:
+Two safeguards built in:
   - Mixed pixels: plots are shrunk inward by one pixel (30 m) so every pixel used is pure.
   - Login: GDAL (inside rasterio) has its own login; set OPENER to earthaccess's
     authenticated session so NASA sends images instead of its login page.
@@ -91,7 +91,7 @@ def read_plot_ndvi(links, plots_lonlat, inner_buffer_m=30, min_valid_fraction=0.
 
 
 def use_earthaccess_login(block_size=256 * 1024):
-    """Route every image read through earthaccess's working Earthdata login (the Lesson 4 fix).
+    """Route every image read through earthaccess's working Earthdata login (fixes GDAL receiving a login page instead of the image).
 
     Call once after `earthaccess.login(...)`. block_size: download in 256 KB pieces, so only
     the parts of each image we need are fetched.

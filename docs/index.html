@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FieldSense</title>
+  <meta name="description" content="A field's past, read from NASA satellites and climate data, to choose its next crop rotation, with the evidence behind every number.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <p class="eyebrow">NASA Space Apps 2026 · Elora Research Station, Ontario</p>
+      <h1>FieldSense</h1>
+      <p class="lede">A field's past, read from space, to choose its next rotation. Every number shows how we know it.</p>
+      <nav class="plots" id="plot-tabs" aria-label="Choose a field"></nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+    <p class="loading" id="loading">Loading field data…</p>
+
+    <section id="glance" hidden>
+      <div class="glance-grid" id="glance-grid"></div>
+    </section>
+
+    <section id="barcode-section" hidden>
+      <h2>The field barcode</h2>
+      <p class="section-lede">Each stripe is one year, January to December. <span class="sw bare"></span> brown = bare soil, <span class="sw green"></span> green = growing plants, <span class="sw none"></span> grey = no clear satellite view. Hover to read a day.</p>
+      <div class="barcode-box"><svg id="barcode" role="img" aria-label="Field barcode: greenness of this field every day, one row per year"></svg><div class="tip" id="tip" hidden></div></div>
+      <p class="evidence-line" id="barcode-evidence"></p>
+    </section>
+
+    <section id="odds-section" hidden>
+      <h2>2026: what the weather could do</h2>
+      <p class="section-lede">1,000 possible 2026 seasons built from 30 years of corrected NASA weather, brought to today's warmth. Each square is 1 season in 100. Shown next to how often it really happened.</p>
+      <div class="odds-grid" id="odds-grid"></div>
+      <p class="evidence-line" id="odds-evidence"></p>
+    </section>
+
+    <section id="rotation-section" hidden>
+      <h2>Rotation options</h2>
+      <p class="section-lede">A trade-off table, not one magic score: which rotation is "best" depends on what the farmer values.</p>
+      <div class="table-scroll"><table class="tradeoff" id="tradeoff"></table></div>
+      <h3>How robust is the choice?</h3>
+      <p class="section-lede small">We tried 2,000 random ways of weighing the criteria. Bars show how often each rotation came out best.</p>
+      <div id="robust"></div>
+      <p class="note" id="not-included"></p>
+    </section>
+
+    <section id="explain-section" hidden>
+      <h2>In plain words</h2>
+      <div class="explain-grid" id="explain-grid"></div>
+    </section>
+
+    <section id="passport-section" hidden>
+      <h2>Evidence passport</h2>
+      <p class="section-lede">Every source, how far to trust it, and how it was checked.</p>
+      <div class="legend" id="legend"></div>
+      <div class="passport" id="passport"></div>
+    </section>
+
+    <section id="gaps-section" hidden>
+      <h2>What we don't know yet</h2>
+      <ul class="gaps" id="gaps"></ul>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p><strong>Data:</strong> NASA POWER · NASA HLS (Landsat 8/9 + Sentinel-2) · NASA SMAP L4 via AppEEARS · ISRIC SoilGrids 2.0 · Environment and Climate Change Canada stations 4760, 41983. Field records used only for aggregate validation.</p>
+    <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a></p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>
