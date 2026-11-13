@@ -1,6 +1,6 @@
 """Phenology: what a field's greenness through the year says about what grew and when it was bare.
 
-From Lesson 4, plus the field barcode.
+Crop history from greenness timing, plus the field barcode.
 
 Input everywhere: NDVI observations for one field, a DataFrame with columns
 `date` and `ndvi` (one row per clear satellite look), as produced by `sources.hls`.

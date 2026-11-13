@@ -273,7 +273,7 @@ async function main() {
     renderPassport();
     $("loading").remove();
   } catch (err) {
-    $("loading").textContent = "No field data found yet. Run the Lesson 9 export and upload the files to docs/data/. " +
+    $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +
       "(If you opened this file directly from your computer, serve it instead: python -m http.server)";
     console.error(err);
   }

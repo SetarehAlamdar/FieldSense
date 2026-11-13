@@ -1,6 +1,6 @@
 """SoilGrids (ISRIC): global soil properties at 250 m, with uncertainty.
 
-From Lesson 2. SoilGrids is itself a machine-learning PREDICTION (trained on ~240,000
+SoilGrids is itself a machine-learning PREDICTION (trained on ~240,000
 soil profiles), so each property comes with a 90% range (Q0.05 to Q0.95).
 At Elora the organic-carbon range was very wide (an ~8x spread), likely a mixed
 250 m pixel. That is why the product lets farmers override with a lab soil test.

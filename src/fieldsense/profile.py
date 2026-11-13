@@ -1,6 +1,6 @@
 """Field profile: everything FieldSense knows about one field, in one JSON file.
 
-This is the hand-off point between the data work (Lessons 1-5) and the product
+This is the hand-off point between the data pipeline and the product
 (rotation engine, API, website). The website never talks to NASA; it reads profiles.
 
 Rule: every number is stored with `evidence.value()`, i.e. a middle value, a range
@@ -10,7 +10,7 @@ Schema version 0.3 (top-level keys):
   schema, field, climate, climate_odds, rotation_options, soil, soil_moisture, history, cover, barcode, gaps
   0.1 -> 0.2 added `climate_odds` and more climate indicators; nothing was removed or renamed,
   so a reader written for 0.1 still works (a backward-compatible change).
-  0.2 -> 0.3 added `rotation_options` (Lesson 7): the rotation comparison, ranking robustness
+  0.2 -> 0.3 added `rotation_options`: the rotation comparison, ranking robustness
   and five-part explanations. Also backward compatible.
 """
 import json

@@ -1,4 +1,4 @@
-"""Checks for fieldsense.climate (Lesson 6). Each test uses weather where we know the answer."""
+"""Checks for fieldsense.climate. Each test uses weather where we know the answer."""
 import numpy as np
 import pandas as pd
 import pytest

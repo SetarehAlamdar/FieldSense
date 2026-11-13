@@ -1,7 +1,7 @@
-"""NASA AppEEARS: point time series cut out of large archives (used for SMAP in Lesson 3).
+"""NASA AppEEARS: point time series cut out of large archives (used for SMAP soil moisture).
 
 Asynchronous jobs: log in -> submit task (get a ticket) -> poll status -> download.
-Lesson learned: 10 years of 3-hourly SMAP Level 4 means ~31,000 files on NASA's side
+Note: 10 years of 3-hourly SMAP Level 4 means ~31,000 files on NASA's side
 and took ~8 hours. The cost of a query depends on how the data is STORED, not on how
 much comes back. Use this for pre-computing demo sites, never inside a live request.
 """

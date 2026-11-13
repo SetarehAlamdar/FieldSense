@@ -1,6 +1,6 @@
 """Export: make the PUBLIC copy of the data that the demo website reads.
 
-Lesson 9. The website never reads your Drive. It reads small JSON files published
+The website never reads the private working data. It reads small JSON files published
 next to it (docs/data/). This module builds those files and is the privacy gate:
 
 - coordinates are rounded to 2 decimals (about 1 km): enough to say "Elora", not enough

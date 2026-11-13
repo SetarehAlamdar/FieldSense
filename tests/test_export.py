@@ -1,4 +1,4 @@
-"""Checks for fieldsense.export (Lesson 9): the privacy gate before anything is published."""
+"""Checks for fieldsense.export: the privacy gate before anything is published."""
 import json
 
 import numpy as np
