@@ -55,3 +55,16 @@ def test_export_demo_writes_safe_files(tmp_path):
     pub = json.loads((out_dir / "plot_1.json").read_text())
     assert export.check_public(pub) == [] and pub["barcode"]["years"] == [2020]
     assert json.loads((out_dir / "index.json").read_text())["fields"][0]["file"] == "plot_1.json"
+
+
+def test_export_demo_copies_figures_when_available(tmp_path):
+    prof_dir, demo_dir, out_dir = tmp_path / "profiles", tmp_path / "demo", tmp_path / "site"
+    prof_dir.mkdir(); demo_dir.mkdir()
+    (prof_dir / "plot_1.json").write_text(json.dumps(_profile()))
+    (demo_dir / "living_cover_elora.png").write_bytes(b"png")       # one of the three figures exists
+    days = pd.date_range("2020-04-01", "2020-10-31", freq="5D")
+    pd.DataFrame({"date": days, "plot": 1, "ndvi": 0.5}).to_csv(tmp_path / "hls.csv", index=False)
+    export.export_demo(prof_dir, tmp_path / "hls.csv", out_dir, demo_dir=demo_dir)
+    figs = json.loads((out_dir / "index.json").read_text())["figures"]
+    assert [f["file"] for f in figs] == ["fig_living_cover.png"]
+    assert (out_dir / "fig_living_cover.png").exists()
