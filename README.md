@@ -1,5 +1,7 @@
 # FieldSense
 
+[![tests](https://github.com/SetarehAlamdar/FieldSense/actions/workflows/tests.yml/badge.svg)](https://github.com/SetarehAlamdar/FieldSense/actions/workflows/tests.yml)
+
 **A field's past, read from NASA satellites and climate data, to choose its next crop rotation, with the evidence behind every number.**
 
 NASA Space Apps Challenge 2026 · Demo site: https://setarehalamdar.github.io/FieldSense/
@@ -64,7 +66,7 @@ cd docs && python -m http.server 8000     # then open http://localhost:8000
 ## Contributing (team)
 
 - **Work on a branch and open a pull request.** Don't push to `main`; every merge to `main` updates the live site.
-- **Tests must pass** (`pytest`) before merging. Add a test when you add or fix behaviour.
+- **Tests must pass** before merging. They run automatically on every pull request (GitHub Actions); run `pytest` locally first. Add a test when you add or fix behaviour.
 - **The website reads only the field profile JSON** (schema 0.3, see `profile.py`). Page changes go in `docs/` (`index.html` for text, `app.js` for each section's drawing, `style.css` for looks).
 - **Agronomy values live in `src/fieldsense/data/crops.json`** and the risk thresholds in `climate.RISKS`. Changes to them should say where the new value comes from.
 
