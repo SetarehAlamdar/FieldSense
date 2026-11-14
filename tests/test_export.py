@@ -96,7 +96,4 @@ def test_highlights_compare_conventional_and_diverse():
                                      "measured_cover": {"spring_bare_share": bare, "green_share_off_season": green}},
                 "climate_odds": {"risks": {"heavy_rain_on_bare_soil": {"share": 0.26, "past_years": "7 of 30"}}}}
     h = export.highlights([pub("CSS", 1.0, 0.03, "corn or soybean (ask)"), pub("SWC+covers", 0.64, 0.39, "winter wheat")])
-    assert [r["value"] for r in h[0]["rows"]] == [100, 64]         # bare in spring: conventional, diverse
-    assert [r["value"] for r in h[1]["rows"]] == [3, 39]           # living cover outside summer
-    assert h[0]["rows"][0]["label"].startswith("Conventional")
-    assert [x.get("big") for x in h[2:]] == ["26 in 100", "Winter wheat"]
+    assert [x["big"] for x in h] == ["100% vs 64%", "3% vs 39%", "26 in 100", "Winter wheat"]

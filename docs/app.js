@@ -293,21 +293,9 @@ async function renderSpace() {
 
 function renderHighlights(list) {
   if (!list || !list.length) return;
-  const compareCard = (h) => {
-    const best = (h.better === "lower" ? Math.min : Math.max)(...h.rows.map((r) => r.value));
-    const rows = h.rows.map((r) => {
-      const bar = el("div", { class: "cmp-bar" }, el("span"));
-      bar.firstChild.style.width = `${Math.max(1, r.value)}%`;
-      if (r.value === best) bar.classList.add("best");
-      return el("div", { class: "cmp-row" }, el("div", { class: "cmp-label" }, r.label),
-        el("div", { class: "cmp-line" }, bar, el("span", { class: "cmp-val" }, `${r.value}%`)));
-    });
-    return el("div", { class: "hl hl-compare" }, el("div", { class: "hl-q" }, h.question), ...rows,
-      el("div", { class: "hl-note" }, `${h.unit}. ${h.note} `, badge(h.evidence)));
-  };
-  const statCard = (h) => el("div", { class: "hl" }, el("div", { class: "hl-q" }, h.question),
-    el("div", { class: "hl-big" }, h.big), el("div", { class: "hl-note" }, h.sentence, " ", badge(h.evidence)));
-  $("highlights").replaceChildren(...list.map((h) => (h.type === "compare" ? compareCard(h) : statCard(h))));
+  $("highlights").replaceChildren(...list.map((h) => el("div", { class: "hl" },
+    el("div", { class: "hl-big" }, h.big), el("div", { class: "hl-label" }, h.label),
+    el("div", { class: "hl-note" }, h.note, " ", badge(h.evidence)))));
 }
 
 function renderGaps(p) {
@@ -334,7 +322,7 @@ async function main() {
     const tabs = $("plot-tabs");
     const buttons = index.fields.map((f) => {
       const b = el("button", { type: "button", "data-file": f.file }, f.name.replace("Elora rotation ", "").replace(/^plot/, "Plot"),
-        el("small", {}, f.rotation_design ? ` · ${f.rotation_design === "simple" ? "conventional" : f.rotation_design}` : ""));
+        el("small", {}, f.rotation_design ? ` · ${f.rotation_design}` : ""));
       b.onclick = () => loadField(f, buttons);
       tabs.append(b);
       return b;
