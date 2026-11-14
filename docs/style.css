@@ -43,10 +43,19 @@ a { color: var(--accent); }
 .space-tile figcaption strong { color: var(--ink); }
 
 /* Headline numbers */
-.highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 18px; }
+.highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+@media (max-width: 700px) { .highlights { grid-template-columns: 1fr; } }
+.hl-q { font-weight: 600; font-size: 1.02rem; margin-bottom: 10px; }
+.cmp-row { margin: 8px 0; }
+.cmp-label { font-size: .86rem; color: var(--muted); margin-bottom: 3px; }
+.cmp-line { display: flex; align-items: center; gap: 10px; }
+.cmp-bar { flex: 1; height: 16px; background: var(--empty); border-radius: 8px; overflow: hidden; }
+.cmp-bar > span { display: block; height: 100%; background: var(--muted); border-radius: 8px; }
+.cmp-bar.best > span { background: var(--accent); }
+.cmp-val { font-family: Fraunces, Georgia, serif; font-size: 1.35rem; font-weight: 650; min-width: 3.2em; text-align: right; }
 .highlights:empty { display: none; }
 .hl { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
-.hl-big { font-family: Fraunces, Georgia, serif; font-size: clamp(1.5rem, 3.2vw, 1.95rem); white-space: nowrap; font-weight: 650; line-height: 1.1; color: var(--accent); }
+.hl-big { font-family: Fraunces, Georgia, serif; font-size: clamp(1.5rem, 3.2vw, 1.95rem); font-weight: 650; line-height: 1.1; color: var(--accent); margin-bottom: 6px; }
 .hl-label { font-weight: 600; margin-top: 6px; }
 .hl-note { font-size: .84rem; color: var(--muted); margin-top: 4px; }
 

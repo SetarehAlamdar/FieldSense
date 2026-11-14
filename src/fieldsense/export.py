@@ -87,8 +87,16 @@ def use_measured_cover(pub, matrix, since=2018):
 ROTATION_GROUP = {"CSS": "conventional", "CSS+rye": "conventional", "SWC": "diverse", "SWC+covers": "diverse"}
 
 
+CONVENTIONAL_LABEL = "Conventional: corn – soybean – soybean"
+DIVERSE_LABEL = "Diverse: soybean – wheat – corn + cover crops"
+
+
 def highlights(pubs):
-    """The 3-4 headline numbers for the top of the page, computed from the public profiles."""
+    """Headline findings for the top of the page, written as plain questions.
+
+    "compare" items show the conventional and diverse rotations side by side (measured by
+    satellite); "stat" items are a single fact with a plain sentence.
+    """
     groups = {}
     for p in pubs:
         ro = p.get("rotation_options") or {}
@@ -97,24 +105,32 @@ def highlights(pubs):
             groups.setdefault(g, []).append(ro)
     out = []
     if "conventional" in groups and "diverse" in groups:
-        mean = lambda g, k: 100 * np.mean([ro["measured_cover"][k] for ro in groups[g]])
-        out.append({"big": f"{mean('conventional', 'spring_bare_share'):.0f}% vs {mean('diverse', 'spring_bare_share'):.0f}%",
-                    "label": "Soil left bare when spring storms hit",
-                    "note": "conventional vs diverse rotation, seen by satellite since 2018", "evidence": "measured"})
-        out.append({"big": f"{mean('conventional', 'green_share_off_season'):.0f}% vs {mean('diverse', 'green_share_off_season'):.0f}%",
-                    "label": "Living cover outside the summer season",
-                    "note": "conventional vs diverse: roots protecting the soil in spring and fall", "evidence": "measured"})
+        mean = lambda g, k: round(100 * float(np.mean([ro["measured_cover"][k] for ro in groups[g]])))
+        a, b = mean("conventional", "spring_bare_share"), mean("diverse", "spring_bare_share")
+        out.append({"type": "compare", "question": "How often was the soil bare when spring storms hit?",
+                    "rows": [{"label": CONVENTIONAL_LABEL, "value": a}, {"label": DIVERSE_LABEL, "value": b}],
+                    "unit": "% of days, 15 Apr – 15 Jun", "better": "lower",
+                    "note": "Seen by satellite on these plots since 2018.", "evidence": "measured"})
+        a, b = mean("conventional", "green_share_off_season"), mean("diverse", "green_share_off_season")
+        out.append({"type": "compare", "question": "How often did living plants protect the soil outside summer?",
+                    "rows": [{"label": CONVENTIONAL_LABEL, "value": a}, {"label": DIVERSE_LABEL, "value": b}],
+                    "unit": "% of days in spring and fall", "better": "higher",
+                    "note": "Cover crops and winter wheat keep roots in the ground.", "evidence": "measured"})
     risks = ((pubs[0].get("climate_odds") or {}).get("risks") or {}) if pubs else {}
     if "heavy_rain_on_bare_soil" in risks:
         r = risks["heavy_rain_on_bare_soil"]
-        out.append({"big": f"{round(100 * r['share'])} in 100",
-                    "label": "Springs in 2026 with a heavy storm (25 mm+)",
-                    "note": f"from 1,000 possible seasons; it happened in {r['past_years']} past years", "evidence": "assumed"})
+        k = round(100 * r["share"])
+        out.append({"type": "stat", "big": f"{k} in 100",
+                    "question": "Will a heavy spring storm hit in 2026?",
+                    "sentence": f"About {k} in 100 possible 2026 springs bring a 25 mm+ downpour while fields are bare "
+                                f"(it happened in {r['past_years']} past years).", "evidence": "assumed"})
     for ro in groups.get("diverse", []):
         nxt = ro.get("next_crop_2026", "")
         if nxt and "(" not in nxt:
-            out.append({"big": nxt[0].upper() + nxt[1:], "label": "What comes next on the diverse plots (2026)",
-                        "note": "read from their 3-year cycle, seen from space", "evidence": "validated"})
+            out.append({"type": "stat", "big": nxt[0].upper() + nxt[1:],
+                        "question": "What comes next on the diverse plots?",
+                        "sentence": f"Their 3-year cycle, read from 10 years of satellite images, puts {nxt} in the field in 2026.",
+                        "evidence": "validated"})
             break
     return out
 
