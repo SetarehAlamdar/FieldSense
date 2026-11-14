@@ -12,7 +12,9 @@ import os
 import numpy as np
 import rasterio
 from pyproj import Transformer
+from rasterio.features import geometry_mask
 from rasterio.windows import Window, from_bounds
+from shapely.geometry import mapping
 
 from . import hls
 
@@ -112,7 +114,8 @@ def find_clear_views(lon, lat, windows, half_size_m=1500, max_bad=0.05, max_trie
                 print(f"  skipped {info['granule']}: {err}")
                 continue
             if best is None or view["bad_fraction"] < best["view"]["bad_fraction"]:
-                best = {"label": label, "date": info["date"].strftime("%Y-%m-%d"), "sensor": info["sensor"], "view": view}
+                best = {"label": label, "date": info["date"].strftime("%Y-%m-%d"), "sensor": info["sensor"],
+                        "view": view, "links": links}
             if view["bad_fraction"] <= max_bad:
                 break
         if best:
@@ -140,5 +143,74 @@ def save_views(found, out_dir, scale=4, half_size_m=1500, note=""):
     meta = {"views": entries, "size_km": round(2 * half_size_m / 1000, 1), "note": note,
             "source": "NASA HLS v2.0 (Landsat 8/9 L30 + Sentinel-2 S30), 30 m"}
     with open(os.path.join(out_dir, "space.json"), "w") as fh:
+        json.dump(meta, fh, indent=1)
+    return meta
+
+
+# ------------------------------------------------------------------ one picture per plot
+def read_plot_views(links, plots_lonlat, pad_px=1):
+    """Each plot's own pixels from one granule: {plot_id: view}, where view["inside"]
+    marks the pixels whose centre is inside the plot (everything else becomes transparent)."""
+    out = {}
+    with rasterio.Env(**hls.GDAL_OPTS):
+        with hls._open(links["red"]) as src:
+            geoms = hls.plots_in_crs(plots_lonlat, src.crs, inner_buffer_m=0)
+            windows = {}
+            for pid, g in geoms.items():
+                minx, miny, maxx, maxy = g.bounds
+                w = from_bounds(minx, miny, maxx, maxy, transform=src.transform)
+                win = Window(int(np.floor(w.col_off)) - pad_px, int(np.floor(w.row_off)) - pad_px,
+                             int(np.ceil(w.width)) + 2 * pad_px + 1, int(np.ceil(w.height)) + 2 * pad_px + 1)
+                windows[pid] = (win, src.window_transform(win))
+            bands = {pid: {"red": src.read(1, window=win)} for pid, (win, _) in windows.items()}
+        for key in ("green", "blue", "nir", "fmask"):
+            with hls._open(links[key]) as src:
+                for pid, (win, _) in windows.items():
+                    bands[pid][key] = src.read(1, window=win)
+    for pid, b in bands.items():
+        win, tr = windows[pid]
+        inside = geometry_mask([mapping(geoms[pid])], out_shape=b["red"].shape, transform=tr, invert=True)
+        fmask = b.pop("fmask")
+        nodata = np.zeros(fmask.shape, bool)
+        for v in b.values():
+            nodata |= v <= NODATA
+        bad = nodata | (fmask == 255) | ((fmask & hls.BAD_FMASK_BITS) != 0)
+        refl = {k: np.where(v <= NODATA, np.nan, v * SCALE).astype("float32") for k, v in b.items()}
+        out[pid] = {**refl, "bad": bad, "inside": inside,
+                    "bad_fraction": float(bad[inside].mean()) if inside.any() else 1.0}
+    return out
+
+
+def _with_alpha(rgb, inside):
+    alpha = np.where(inside, 255, 0).astype("uint8")
+    return np.dstack([rgb, alpha])
+
+
+def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24):
+    """For the dates in `found` (from find_clear_views), save each plot's true-colour and
+    greenness picture and add a "plots" table (rows = plots, columns = dates) to space.json."""
+    from PIL import Image
+    designs = designs or {}
+    rows = {pid: [] for pid in sorted(plots_lonlat)}
+    for i, f in enumerate(found, start=1):
+        views = read_plot_views(f["links"], plots_lonlat)
+        for pid in rows:
+            v = views[pid]
+            tile = {}
+            for kind, make in (("true", true_colour), ("green", greenness)):
+                img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
+                img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+                tile[kind] = f"plot{pid}_{i}_{kind}.png"
+                img.save(os.path.join(out_dir, tile[kind]))
+            tile["clear_share"] = round(1 - v["bad_fraction"], 3)
+            rows[pid].append(tile)
+    path = os.path.join(out_dir, "space.json")
+    meta = json.load(open(path)) if os.path.exists(path) else {"views": []}
+    meta["plots"] = {
+        "dates": [{"label": f["label"], "date": f["date"]} for f in found],
+        "rows": [{"plot": int(pid), "design": designs.get(pid, ""), "tiles": tiles} for pid, tiles in rows.items()],
+        "note": "Only each plot's own 30 m pixels are shown (about 7 x 7 per plot); nothing outside the plot.",
+    }
+    with open(path, "w") as fh:
         json.dump(meta, fh, indent=1)
     return meta

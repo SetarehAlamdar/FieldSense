@@ -60,3 +60,22 @@ def test_save_views_writes_images_and_index(tmp_path):
     assert (tmp_path / "space_1_true.png").exists() and (tmp_path / "space_1_green.png").exists()
     assert json.loads((tmp_path / "space.json").read_text())["views"][0]["label"] == "Late October"
     assert meta["views"][0]["clear_share"] == 1.0
+
+
+
+def test_plot_views_show_only_pixels_inside_each_plot(tmp_path):
+    from pyproj import Transformer
+    to_ll = Transformer.from_crs("EPSG:32617", "EPSG:4326", always_xy=True).transform
+    square = lambda x, y, s: [to_ll(x, y), to_ll(x + s, y), to_ll(x + s, y + s), to_ll(x, y + s), to_ll(x, y)]
+    plots = {1: square(X0 - 300, Y0 - 300, 200), 2: square(X0 + 100, Y0 + 100, 200)}
+    links = _write_granule(tmp_path, red=400, nir=3000, fmask=0)
+    views = hls_views.read_plot_views(links, plots)
+    for v in views.values():
+        assert 30 < v["inside"].sum() < 60                # 200 m x 200 m = about 44 pixels of 30 m
+        assert not v["inside"].all()                       # the frame around the plot is masked out
+    found = [{"label": "Late October", "date": "2023-10-20", "links": links}]
+    meta = hls_views.add_plot_views(found, plots, tmp_path, designs={1: "simple", 2: "diverse"})
+    assert [r["design"] for r in meta["plots"]["rows"]] == ["simple", "diverse"]
+    from PIL import Image
+    img = Image.open(tmp_path / meta["plots"]["rows"][0]["tiles"][0]["green"])
+    assert img.mode == "RGBA" and img.getpixel((0, 0))[3] == 0     # corner outside the plot is transparent
