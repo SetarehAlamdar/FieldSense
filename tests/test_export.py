@@ -68,3 +68,23 @@ def test_export_demo_copies_figures_when_available(tmp_path):
     figs = json.loads((out_dir / "index.json").read_text())["figures"]
     assert [f["file"] for f in figs] == ["fig_living_cover.png"]
     assert (out_dir / "fig_living_cover.png").exists()
+
+
+def test_current_rotation_uses_measured_cover_and_robustness_is_recomputed():
+    from fieldsense import rotation as rt
+    from fieldsense.climate import RISKS
+    odds = {"risks": {k: {"share": 0.2} for k in RISKS}}
+    table = rt.compare(rt.CANDIDATES, odds).round(4).reset_index()
+    pub = {"climate_odds": odds,
+           "rotation_options": {"current": "CSS", "candidates": json.loads(table.to_json(orient="records")),
+                                "calendar_model_evidence": "modelled", "robustness_best_share": {}}}
+    before = [c for c in pub["rotation_options"]["candidates"] if c["key"] == "CSS"][0]["climate_risk_total"]
+    days = pd.date_range("2018-03-01", "2019-11-30", freq="3D")
+    m = __import__("fieldsense").barcode_matrix(__import__("fieldsense").daily_ndvi(
+        pd.DataFrame({"date": days, "ndvi": 0.8})))             # green all season, every year
+    export.use_measured_cover(pub, m)
+    css = [c for c in pub["rotation_options"]["candidates"] if c["key"] == "CSS"][0]
+    assert css["cover_evidence"] == "measured" and css["spring_bare_share"] == 0.0
+    assert css["risk_heavy_rain_on_bare_soil"] == 0.0 and css["climate_risk_total"] < before   # no bare soil, no rain-on-bare risk
+    assert [c for c in pub["rotation_options"]["candidates"] if c["key"] == "SWC"][0]["cover_evidence"] == "modelled"
+    assert abs(sum(pub["rotation_options"]["robustness_best_share"].values()) - 1) < 0.01

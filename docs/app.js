@@ -212,7 +212,11 @@ function renderRotations(p) {
   for (const c of ro.candidates) {
     const isCur = c.key === ro.current;
     const tr = el("tr", { class: isCur ? "current" : "" }, el("td", {}, ROT_NAMES[c.key] || c.name, isCur ? el("span", { class: "tag" }, "NOW") : ""));
-    COLS.forEach(([k, , , fmt]) => tr.append(el("td", { class: c[k] === best[k] ? "best" : "" }, String(fmt(c[k])))));
+    COLS.forEach(([k, , , fmt]) => {
+      const coverCol = k === "green_share_off_season" || k === "spring_bare_share";
+      const mark = coverCol && c.cover_evidence ? el("span", { class: `dot ${c.cover_evidence}`, title: c.cover_evidence === "measured" ? "measured by satellite" : "estimated from the crop calendar" }) : "";
+      tr.append(el("td", { class: c[k] === best[k] ? "best" : "" }, String(fmt(c[k])), mark));
+    });
     body.append(tr);
   }
   t.append(body);
@@ -223,8 +227,10 @@ function renderRotations(p) {
     bar.firstChild.style.width = `${100 * v}%`;
     rb.append(el("div", { class: "bar-row" }, el("span", {}, ROT_NAMES[k] || k), bar, el("span", {}, pct(v))));
   }
-  $("not-included").replaceChildren(`Not included yet: ${(ro.not_included || []).join(", ")}. Leaving out costs makes diverse rotations look better than many farmers would find them. Soil cover for rotations the field hasn't tried comes from a crop-calendar model `,
-    badge(ro.calendar_model_evidence || "modelled"), ".");
+  $("not-included").replaceChildren(
+    el("span", { class: "dot measured" }), " Soil cover for this field's current rotation is ", badge("measured"), ` by satellite${ro.measured_since ? " since " + ro.measured_since : ""}. `,
+    el("span", { class: "dot modelled" }), " For rotations it hasn't tried, it comes from a crop-calendar model ", badge(ro.calendar_model_evidence || "modelled"), ". ",
+    `Not included yet: ${(ro.not_included || []).join(", ")}. Leaving out costs makes diverse rotations look better than many farmers would find them.`);
   show("rotation-section");
 }
 

@@ -7,7 +7,9 @@ next to it (docs/data/). This module builds those files and is the privacy gate:
   to locate a plot;
 - plot areas and the survey-map source are dropped;
 - the barcode is added as numbers (years x 365 days, greenness x 100) so the page can draw it;
-- `check_public` refuses anything that still looks private.
+- `check_public` refuses anything that still looks private;
+- in the rotation table, the field's CURRENT rotation gets its satellite-measured soil cover
+  (measured beats modelled), and the robustness shares are recomputed with it.
 """
 import copy
 import json
@@ -17,7 +19,8 @@ import shutil
 import numpy as np
 import pandas as pd
 
-from .phenology import barcode_matrix, daily_ndvi
+from .phenology import barcode_matrix, daily_ndvi, measured_cover_shares
+from .rotation import CRITERIA, rank_robustness
 
 PRIVATE_KEYS = {"area_ha", "location_source"}
 
@@ -55,6 +58,31 @@ def barcode_payload(obs, since=None):
     return {"years": [int(y) for y in m.index], "days": 365, "scale": 100, "values": rows}
 
 
+def use_measured_cover(pub, matrix, since=2018):
+    """Replace the current rotation's modelled soil cover with the satellite measurement."""
+    ro = pub.get("rotation_options")
+    if not ro or not ro.get("candidates"):
+        return pub
+    meas = measured_cover_shares(matrix, since=since)
+    for c in ro["candidates"]:
+        c["cover_evidence"] = "measured" if c["key"] == ro["current"] else ro.get("calendar_model_evidence", "modelled")
+        if c["key"] == ro["current"]:
+            for k, v in meas.items():
+                if k in c and np.isfinite(v):
+                    c[k] = round(float(v), 4)
+            # heavy rain on bare soil depends on spring bare soil: recompute it with the measurement
+            p_rain = (((pub.get("climate_odds") or {}).get("risks") or {}).get("heavy_rain_on_bare_soil") or {}).get("share")
+            if p_rain is not None and "risk_heavy_rain_on_bare_soil" in c:
+                new = round(100 * p_rain * c["spring_bare_share"], 1)
+                c["climate_risk_total"] = round(c["climate_risk_total"] - c["risk_heavy_rain_on_bare_soil"] + new, 1)
+                c["risk_heavy_rain_on_bare_soil"] = new
+    table = pd.DataFrame(ro["candidates"]).set_index("key")
+    crit = {k: v for k, v in CRITERIA.items() if k in table.columns}
+    ro["robustness_best_share"] = {k: round(float(v), 3) for k, v in rank_robustness(table, crit).items()}
+    ro["measured_since"] = since
+    return pub
+
+
 def check_public(obj, path="data"):
     """Problems that would make `obj` unsafe to publish (empty list = OK)."""
     problems = []
@@ -89,7 +117,9 @@ def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None
             prof = json.load(fh)
         plot_no = int(fname.split("_")[1].split(".")[0])
         pub = public_profile(prof)
-        pub["barcode"] = barcode_payload(hls[hls[plot_column] == plot_no][["date", "ndvi"]])
+        obs = hls[hls[plot_column] == plot_no][["date", "ndvi"]]
+        pub["barcode"] = barcode_payload(obs)
+        use_measured_cover(pub, barcode_matrix(daily_ndvi(obs)))
         problems = check_public(pub)
         if problems:
             raise ValueError(f"{fname} is not safe to publish: {problems[:5]}")
