@@ -13,10 +13,10 @@ const LABEL_TEXT = {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const MONTH_START = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
 const ROT_NAMES = {
-  "CS": "Corn – soybean",
-  "CS+rye": "Corn – soybean + rye",
+  "CSS": "Corn – soybean – soybean",
+  "CSS+rye": "Corn – soybean – soybean + rye",
   "SWC": "Soybean – wheat – corn",
-  "SWC+clover": "Soybean – wheat + clover – corn",
+  "SWC+covers": "Soybean – wheat + clover – corn + rye",
 };
 
 let evidence = {};

@@ -22,7 +22,7 @@ def test_crop_table_loads_from_the_package():
     assert {"corn", "soybean", "winter_wheat"} <= set(t["crops"])
 
 
-@pytest.mark.parametrize("key,gap", [("CS", 2), ("SWC", 3), ("SWC+clover", 3)])
+@pytest.mark.parametrize("key,gap", [("CSS", 1), ("SWC", 3), ("SWC+covers", 3)])
 def test_years_between_same_crop(key, gap):
     assert rt.agronomy_metrics(CAND[key])["min_years_between_same_crop"] == gap
 
@@ -33,7 +33,7 @@ def test_wheat_is_green_the_fall_before_its_year():
     assert not g[2, 310 - 1]                    # corn year, 6 Nov: bare
 
 
-@pytest.mark.parametrize("with_cover,without", [("CS+rye", "CS"), ("SWC+clover", "SWC")])
+@pytest.mark.parametrize("with_cover,without", [("CSS+rye", "CSS"), ("SWC+covers", "SWC")])
 def test_property_adding_a_cover_never_reduces_cover(with_cover, without):
     a, b = rt.cover_metrics(CAND[with_cover]), rt.cover_metrics(CAND[without])
     assert a["green_share_off_season"] >= b["green_share_off_season"]
@@ -51,8 +51,8 @@ def test_no_corn_means_no_pollination_heat_exposure():
 
 
 def test_rye_after_soybean_is_exposed_to_a_short_fall():
-    assert rt.climate_exposure(CAND["CS+rye"], ODDS)["short_fall_after_soybean"] > 0
-    assert rt.climate_exposure(CAND["CS"], ODDS)["short_fall_after_soybean"] == 0
+    assert rt.climate_exposure(CAND["CSS+rye"], ODDS)["short_fall_after_soybean"] > 0
+    assert rt.climate_exposure(CAND["CSS"], ODDS)["short_fall_after_soybean"] == 0
 
 
 def test_a_rotation_better_on_every_criterion_always_wins():
@@ -66,7 +66,7 @@ def test_a_rotation_better_on_every_criterion_always_wins():
 def test_weighted_ranking_follows_the_weights():
     t = rt.compare(rt.CANDIDATES, ODDS)
     only_cover = rt.weighted_ranking(t, {"green_share_off_season": 1})
-    assert only_cover.index[0] == "SWC+clover"
+    assert only_cover.index[0] == "SWC+covers"
 
 
 def test_detect_current_and_next_crop():
@@ -76,24 +76,24 @@ def test_detect_current_and_next_crop():
             {"year": 2023, "satellite_says": "winter wheat + green after harvest (cover crop?)"},
             {"year": 2024, "satellite_says": "corn or soybean + green in spring (overwintered cover crop?)"},
             {"year": 2025, "satellite_says": "corn or soybean"}]
-    assert rt.detect_current(hist) == "SWC+clover"
-    assert rt.next_crop("SWC+clover", hist, 2026) == "winter wheat"
-    assert rt.next_crop("SWC+clover", hist, 2027) == "corn"
-    assert rt.detect_current([{"year": 2025, "satellite_says": "corn or soybean"}]) == "CS"
+    assert rt.detect_current(hist) == "SWC+covers"
+    assert rt.next_crop("SWC+covers", hist, 2026) == "winter wheat"
+    assert rt.next_crop("SWC+covers", hist, 2027) == "corn"
+    assert rt.detect_current([{"year": 2025, "satellite_says": "corn or soybean"}]) == "CSS"
 
 
 def test_explanation_has_five_parts_each_with_evidence():
     t = rt.compare(rt.CANDIDATES, ODDS)
-    ex = rt.explain(t.loc["CS"], current_key="CS", evidence={})
+    ex = rt.explain(t.loc["CSS"], current_key="CSS", evidence={})
     assert list(ex) == ["what", "soil_cover", "climate_2026", "nutrients_pests", "unknowns"]
     assert all(part["evidence"] in ("measured", "validated", "modelled", "assumed") for part in ex.values())
 
 
 def test_diversity_has_a_cost_so_the_ranking_is_a_real_trade_off():
     t = rt.compare(rt.CANDIDATES, ODDS)
-    assert t.loc["SWC+clover", "crops_to_manage"] > t.loc["CS", "crops_to_manage"]
+    assert t.loc["SWC+covers", "crops_to_manage"] > t.loc["CSS", "crops_to_manage"]
     simplicity_first = rt.weighted_ranking(t, {"crops_to_manage": 1})
-    assert simplicity_first.index[0] == "CS"
+    assert simplicity_first.index[0] == "CSS"
 
 
 def test_wheat_and_clover_are_exposed_to_spring_frost_and_dry_spells():
@@ -102,5 +102,17 @@ def test_wheat_and_clover_are_exposed_to_spring_frost_and_dry_spells():
     assert ex["late_spring_frost"] > 0 and ex["summer_dry_spell"] > 0
     assert ex["pollination_heat"] == 0                          # harvested before corn pollination
     no_clover = rt.climate_exposure(CAND["SWC"], ODDS)["summer_dry_spell"]
-    with_clover = rt.climate_exposure(CAND["SWC+clover"], ODDS)["summer_dry_spell"]
+    with_clover = rt.climate_exposure(CAND["SWC+covers"], ODDS)["summer_dry_spell"]
     assert with_clover >= no_clover                             # clover can't make dry-spell exposure smaller
+
+
+def test_property_legume_share_never_exceeds_100_percent():
+    soy_clover = rt.Rotation("S+clover", "Soybean + clover every year", ["soybean"], {0: "red_clover"})
+    assert rt.agronomy_metrics(soy_clover)["legume_share"] == 1.0
+    for r in rt.CANDIDATES:
+        assert 0 <= rt.agronomy_metrics(r)["legume_share"] <= 1
+
+
+def test_elora_rotations_are_three_years():
+    assert all(len(r) == 3 for r in rt.CANDIDATES)
+    assert CAND["CSS"].crops == ["corn", "soybean", "soybean"]
