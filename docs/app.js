@@ -294,7 +294,10 @@ async function renderSpace() {
 function renderHighlights(list) {
   if (!list || !list.length) return;
   $("highlights").replaceChildren(...list.map((h) => el("div", { class: "hl" },
-    el("div", { class: "hl-big" }, h.big), el("div", { class: "hl-label" }, h.label),
+    el("div", { class: "hl-big" }, ...(h.simple != null && h.diverse != null
+      ? [el("span", { class: "c-simple", title: "simple rotation" }, `${h.simple}%`), el("span", { class: "hl-vs" }, " vs "),
+         el("span", { class: "c-diverse", title: "diverse rotation" }, `${h.diverse}%`)]
+      : [h.big])), el("div", { class: "hl-label" }, h.label),
     el("div", { class: "hl-note" }, h.note, " ", badge(h.evidence)))));
 }
 
