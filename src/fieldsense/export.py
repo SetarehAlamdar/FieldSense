@@ -12,6 +12,7 @@ next to it (docs/data/). This module builds those files and is the privacy gate:
 import copy
 import json
 import os
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,16 @@ import pandas as pd
 from .phenology import barcode_matrix, daily_ndvi
 
 PRIVATE_KEYS = {"area_ha", "location_source"}
+
+# Figures made by the analysis that the website shows in its gallery (copied if present).
+FIGURES = [
+    ("living_cover_elora.png", "Living cover outside the main crop season, all four plots",
+     "Share of off-season days with green plants, per year. Diverse rotations (plots 3-4) keep the soil covered far more often."),
+    ("climate_indicators_elora.png", "Climate indicators, 1996-2025",
+     "Frost-free days, heat units, heat at corn pollination, heavy spring rain, summer dry spells and fall warmth, from corrected NASA POWER weather."),
+    ("rotation_calendars.png", "When each rotation keeps the soil green",
+     "Modelled from the crop calendar: green = growing plants, brown = bare soil, one row per year of the cycle."),
+]
 
 
 def public_profile(profile, coord_decimals=2):
@@ -62,9 +73,11 @@ def check_public(obj, path="data"):
     return problems
 
 
-def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot"):
+def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None):
     """Write data/index.json, data/evidence.json and data/<field>.json for the website.
 
+    If `demo_dir` is given, the analysis figures listed in FIGURES are copied too
+    (as fig_<name>.png) and listed in index.json for the page's gallery.
     Returns the list of files written. Raises ValueError if anything fails `check_public`.
     """
     os.makedirs(out_dir, exist_ok=True)
@@ -99,8 +112,16 @@ def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot"):
         with open(out, "w") as fh:
             json.dump(ev, fh, indent=1)
         written.append(out)
+    figures = []
+    for name, title, caption in FIGURES:
+        src = os.path.join(demo_dir, name) if demo_dir else None
+        if src and os.path.exists(src):
+            dst = os.path.join(out_dir, "fig_" + name.replace("_elora", ""))
+            shutil.copyfile(src, dst)
+            written.append(dst)
+            figures.append({"file": os.path.basename(dst), "title": title, "caption": caption})
     out = os.path.join(out_dir, "index.json")
     with open(out, "w") as fh:
-        json.dump({"fields": index}, fh, indent=1)
+        json.dump({"fields": index, "figures": figures}, fh, indent=1)
     written.append(out)
     return written

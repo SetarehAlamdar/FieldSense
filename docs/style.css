@@ -65,6 +65,21 @@ main section { padding: 36px 0 8px; }
 .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font-size: .8rem;
   padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -130%); }
 
+/* Living cover chart */
+.cover-chart { display: flex; align-items: flex-end; gap: 6px; height: 150px; padding: 8px 4px 0; border-bottom: 1px solid var(--line); }
+.cover-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 0; }
+.cover-col .bar-v { width: 100%; max-width: 46px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+.cover-col .val { font-size: .72rem; color: var(--muted); margin-bottom: 3px; }
+.cover-years { display: flex; gap: 6px; padding: 4px 4px 0; }
+.cover-years span { flex: 1; text-align: center; font-size: .72rem; color: var(--muted); min-width: 0; }
+
+/* Figures gallery */
+.figures { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.figure { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 0; }
+.figure img { width: 100%; height: auto; display: block; border-radius: 6px; background: #fff; }
+.figure figcaption { font-size: .88rem; color: var(--muted); margin-top: 8px; }
+.figure figcaption strong { color: var(--ink); display: block; margin-bottom: 2px; }
+
 /* Odds */
 .odds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
 .odd { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }

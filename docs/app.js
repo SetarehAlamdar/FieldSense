@@ -37,6 +37,7 @@ const svg = (tag, attrs = {}) => {
 const badge = (label) => el("span", { class: `badge ${label}`, title: LABEL_TEXT[label] || "" }, label || "unknown");
 const evLabel = (id) => (evidence[id] && evidence[id].label) || null;
 const pct = (x) => `${Math.round(100 * x)}%`;
+const nice = (t) => (t || "").replace(/ ?degC/g, " °C");
 const show = (id) => { $(id).hidden = false; };
 
 function doyToDate(doy) {
@@ -139,6 +140,31 @@ function renderBarcode(p) {
   show("barcode-section");
 }
 
+function renderCoverChart(p) {
+  const rows = ((p.cover || {}).per_year || []).filter((r) => r.green_share_off_season != null);
+  const box = $("cover-chart");
+  box.replaceChildren();
+  if (!rows.length) return;
+  const chart = el("div", { class: "cover-chart", role: "img",
+    "aria-label": "Share of off-season days green, per year: " + rows.map((r) => `${r.year} ${pct(r.green_share_off_season)}`).join(", ") });
+  const years = el("div", { class: "cover-years" });
+  for (const r of rows) {
+    const bar = el("div", { class: "bar-v", title: `${r.year}: ${pct(r.green_share_off_season)} of ${r.observed_days_off_season} observed off-season days` });
+    bar.style.height = `${Math.max(1, 100 * r.green_share_off_season)}%`;
+    chart.append(el("div", { class: "cover-col" }, el("span", { class: "val" }, pct(r.green_share_off_season)), bar));
+    years.append(el("span", {}, `'${String(r.year).slice(2)}`));
+  }
+  box.append(chart, years);
+}
+
+function renderFigures(figures) {
+  if (!figures || !figures.length) return;
+  $("figures").replaceChildren(...figures.map((f) => el("figure", { class: "figure" },
+    el("a", { href: DATA + f.file, target: "_blank", rel: "noopener", title: "Open full size" }, el("img", { src: DATA + f.file, alt: f.title })),
+    el("figcaption", {}, el("strong", {}, f.title), f.caption))));
+  show("figures-section");
+}
+
 function renderOdds(p) {
   const odds = p.climate_odds;
   if (!odds) return;
@@ -228,11 +254,11 @@ function renderPassport() {
   pp.replaceChildren();
   const order = { measured: 0, validated: 1, modelled: 2, assumed: 3 };
   Object.values(evidence).sort((a, b) => order[a.label] - order[b.label]).forEach((e) => {
-    const card = el("div", { class: `ev ${e.label}` }, badge(e.label), el("p", { class: "claim" }, e.claim));
+    const card = el("div", { class: `ev ${e.label}` }, badge(e.label), el("p", { class: "claim" }, nice(e.claim)));
     card.append(el("p", { class: "meta" }, "Source: ", e.source));
     if (e.test) card.append(el("p", { class: "meta" }, "Test: ", e.test));
-    if (e.result) card.append(el("p", { class: "meta" }, "Result: ", e.result));
-    if (e.caveat) card.append(el("p", { class: "meta" }, "Caveat: ", e.caveat));
+    if (e.result) card.append(el("p", { class: "meta" }, "Result: ", nice(e.result)));
+    if (e.caveat) card.append(el("p", { class: "meta" }, "Caveat: ", nice(e.caveat)));
     pp.append(card);
   });
   show("passport-section");
@@ -248,7 +274,7 @@ function renderGaps(p) {
 async function loadField(entry, buttons) {
   buttons.forEach((b) => b.setAttribute("aria-pressed", b.dataset.file === entry.file ? "true" : "false"));
   const p = await (await fetch(DATA + entry.file)).json();
-  renderGlance(p); renderBarcode(p); renderOdds(p); renderRotations(p); renderExplanations(p); renderGaps(p);
+  renderGlance(p); renderBarcode(p); renderCoverChart(p); renderOdds(p); renderRotations(p); renderExplanations(p); renderGaps(p);
   history.replaceState(null, "", `#${entry.file.replace(".json", "")}`);
 }
 
@@ -271,6 +297,7 @@ async function main() {
     const first = index.fields.find((f) => f.file === wanted) || index.fields[0];
     await loadField(first, buttons);
     renderPassport();
+    renderFigures(index.figures);
     $("loading").remove();
   } catch (err) {
     $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +
