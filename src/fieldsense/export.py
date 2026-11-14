@@ -90,6 +90,8 @@ ROTATION_GROUP = {"CSS": "conventional", "CSS+rye": "conventional", "SWC": "dive
 def highlights(pubs):
     """The 3-4 headline numbers for the top of the page, computed from the public profiles."""
     groups = {}
+    farms = [p for p in pubs if p.get("group") == "Nearby farms"]
+    pubs = [p for p in pubs if p.get("group", "Elora trial") == "Elora trial"] or pubs
     for p in pubs:
         ro = p.get("rotation_options") or {}
         g = ROTATION_GROUP.get(ro.get("current"))
@@ -112,6 +114,17 @@ def highlights(pubs):
         out.append({"big": f"{round(100 * r['share'])} in 100",
                     "label": "Springs in 2026 with a heavy storm (25 mm+)",
                     "note": f"from 1,000 possible seasons; it happened in {r['past_years']} past years", "evidence": "assumed"})
+    fg = {}
+    for p in farms:
+        ro = p.get("rotation_options") or {}
+        if ro.get("measured_cover"):
+            fg.setdefault(p["field"].get("rotation_design"), []).append(ro["measured_cover"]["spring_bare_share"])
+    if fg.get("simple") and fg.get("diverse"):
+        a, b = round(100 * float(np.mean(fg["simple"]))), round(100 * float(np.mean(fg["diverse"])))
+        out.append({"simple": a, "diverse": b, "big": f"{a}% vs {b}%",
+                    "label": f"Same pattern on {len(fg['simple']) + len(fg['diverse'])} nearby farms",
+                    "note": "soil bare in spring storms, simple vs diverse farm fields (rotation from Canada's crop map)",
+                    "evidence": "measured"})
     for ro in groups.get("diverse", []):
         nxt = ro.get("next_crop_2026", "")
         if nxt and "(" not in nxt:
@@ -139,37 +152,45 @@ def check_public(obj, path="data"):
     return problems
 
 
-def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None):
+def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None, farm_hls_csv=None):
     """Write data/index.json, data/evidence.json and data/<field>.json for the website.
 
+    Trial plots: profiles named plot_<n>.json, greenness in `hls_csv`.
+    Nearby farms (optional): profiles named farm_<n>.json, greenness in `farm_hls_csv`.
     If `demo_dir` is given, the analysis figures listed in FIGURES are copied too
     (as fig_<name>.png) and listed in index.json for the page's gallery.
     Returns the list of files written. Raises ValueError if anything fails `check_public`.
     """
     os.makedirs(out_dir, exist_ok=True)
-    hls = pd.read_csv(hls_csv, parse_dates=["date"])
-    hls = hls[hls["ndvi"].notna()]
+    sets = [("plot_", hls_csv, "Elora trial")]
+    if farm_hls_csv and os.path.exists(farm_hls_csv):
+        sets.append(("farm_", farm_hls_csv, "Nearby farms"))
     written, index, pubs = [], [], []
-    for fname in sorted(f for f in os.listdir(profile_dir) if f.startswith("plot_") and f.endswith(".json")):
-        with open(os.path.join(profile_dir, fname)) as fh:
-            prof = json.load(fh)
-        plot_no = int(fname.split("_")[1].split(".")[0])
-        pub = public_profile(prof)
-        obs = hls[hls[plot_column] == plot_no][["date", "ndvi"]]
-        pub["barcode"] = barcode_payload(obs)
-        use_measured_cover(pub, barcode_matrix(daily_ndvi(obs)))
-        problems = check_public(pub)
-        if problems:
-            raise ValueError(f"{fname} is not safe to publish: {problems[:5]}")
-        pubs.append(pub)
-        out = os.path.join(out_dir, fname)
-        with open(out, "w") as fh:
-            json.dump(pub, fh, separators=(",", ":"))
-        written.append(out)
-        f = pub["field"]
-        index.append({"id": f["id"], "name": f["name"], "file": fname,
-                      "rotation_design": f.get("rotation_design"),
-                      "current": (pub.get("rotation_options") or {}).get("current")})
+    for prefix, csv, group in sets:
+        hls = pd.read_csv(csv, parse_dates=["date"])
+        hls = hls[hls["ndvi"].notna()]
+        for fname in sorted((f for f in os.listdir(profile_dir) if f.startswith(prefix) and f.endswith(".json")),
+                            key=lambda f: int(f[len(prefix):-5])):
+            with open(os.path.join(profile_dir, fname)) as fh:
+                prof = json.load(fh)
+            num = int(fname[len(prefix):-5])
+            pub = public_profile(prof)
+            obs = hls[hls[plot_column] == num][["date", "ndvi"]]
+            pub["barcode"] = barcode_payload(obs)
+            use_measured_cover(pub, barcode_matrix(daily_ndvi(obs)))
+            pub["group"] = group
+            problems = check_public(pub)
+            if problems:
+                raise ValueError(f"{fname} is not safe to publish: {problems[:5]}")
+            pubs.append(pub)
+            out = os.path.join(out_dir, fname)
+            with open(out, "w") as fh:
+                json.dump(pub, fh, separators=(",", ":"))
+            written.append(out)
+            f = pub["field"]
+            index.append({"id": f["id"], "name": f["name"], "file": fname, "group": group,
+                          "rotation_design": f.get("rotation_design"),
+                          "current": (pub.get("rotation_options") or {}).get("current")})
     ev_src = os.path.join(profile_dir, "evidence.json")
     if os.path.exists(ev_src):
         with open(ev_src) as fh:
