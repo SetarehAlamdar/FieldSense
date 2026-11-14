@@ -80,7 +80,43 @@ def use_measured_cover(pub, matrix, since=2018):
     crit = {k: v for k, v in CRITERIA.items() if k in table.columns}
     ro["robustness_best_share"] = {k: round(float(v), 3) for k, v in rank_robustness(table, crit).items()}
     ro["measured_since"] = since
+    ro["measured_cover"] = {k: round(float(v), 4) for k, v in meas.items() if np.isfinite(v)}
     return pub
+
+
+ROTATION_GROUP = {"CSS": "conventional", "CSS+rye": "conventional", "SWC": "diverse", "SWC+covers": "diverse"}
+
+
+def highlights(pubs):
+    """The 3-4 headline numbers for the top of the page, computed from the public profiles."""
+    groups = {}
+    for p in pubs:
+        ro = p.get("rotation_options") or {}
+        g = ROTATION_GROUP.get(ro.get("current"))
+        if g and ro.get("measured_cover"):
+            groups.setdefault(g, []).append(ro)
+    out = []
+    if "conventional" in groups and "diverse" in groups:
+        mean = lambda g, k: 100 * np.mean([ro["measured_cover"][k] for ro in groups[g]])
+        out.append({"big": f"{mean('conventional', 'spring_bare_share'):.0f}% vs {mean('diverse', 'spring_bare_share'):.0f}%",
+                    "label": "Soil left bare when spring storms hit",
+                    "note": "conventional vs diverse rotation, seen by satellite since 2018", "evidence": "measured"})
+        out.append({"big": f"{mean('conventional', 'green_share_off_season'):.0f}% vs {mean('diverse', 'green_share_off_season'):.0f}%",
+                    "label": "Living cover outside the summer season",
+                    "note": "conventional vs diverse: roots protecting the soil in spring and fall", "evidence": "measured"})
+    risks = ((pubs[0].get("climate_odds") or {}).get("risks") or {}) if pubs else {}
+    if "heavy_rain_on_bare_soil" in risks:
+        r = risks["heavy_rain_on_bare_soil"]
+        out.append({"big": f"{round(100 * r['share'])} in 100",
+                    "label": "Springs in 2026 with a heavy storm (25 mm+)",
+                    "note": f"from 1,000 possible seasons; it happened in {r['past_years']} past years", "evidence": "assumed"})
+    for ro in groups.get("diverse", []):
+        nxt = ro.get("next_crop_2026", "")
+        if nxt and "(" not in nxt:
+            out.append({"big": nxt[0].upper() + nxt[1:], "label": "What comes next on the diverse plots (2026)",
+                        "note": "read from their 3-year cycle, seen from space", "evidence": "validated"})
+            break
+    return out
 
 
 def check_public(obj, path="data"):
@@ -111,7 +147,7 @@ def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None
     os.makedirs(out_dir, exist_ok=True)
     hls = pd.read_csv(hls_csv, parse_dates=["date"])
     hls = hls[hls["ndvi"].notna()]
-    written, index = [], []
+    written, index, pubs = [], [], []
     for fname in sorted(f for f in os.listdir(profile_dir) if f.startswith("plot_") and f.endswith(".json")):
         with open(os.path.join(profile_dir, fname)) as fh:
             prof = json.load(fh)
@@ -123,6 +159,7 @@ def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None
         problems = check_public(pub)
         if problems:
             raise ValueError(f"{fname} is not safe to publish: {problems[:5]}")
+        pubs.append(pub)
         out = os.path.join(out_dir, fname)
         with open(out, "w") as fh:
             json.dump(pub, fh, separators=(",", ":"))
@@ -152,6 +189,6 @@ def export_demo(profile_dir, hls_csv, out_dir, plot_column="plot", demo_dir=None
             figures.append({"file": os.path.basename(dst), "title": title, "caption": caption})
     out = os.path.join(out_dir, "index.json")
     with open(out, "w") as fh:
-        json.dump({"fields": index, "figures": figures}, fh, indent=1)
+        json.dump({"fields": index, "figures": figures, "highlights": highlights(pubs)}, fh, indent=1)
     written.append(out)
     return written

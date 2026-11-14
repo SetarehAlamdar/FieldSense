@@ -135,8 +135,8 @@ function renderBarcode(p) {
     tip.hidden = false;
   };
   box.onmouseleave = () => { tip.hidden = true; };
-  $("barcode-evidence").replaceChildren("Greenness ", badge("measured"), " from NASA HLS satellite pixels inside the field. Crop labels on the right ",
-    badge(evLabel("hls_crop_history") || "modelled"), evidence.hls_crop_history && evidence.hls_crop_history.result ? `: ${evidence.hls_crop_history.result}.` : ".");
+  $("barcode-evidence").replaceChildren("NASA HLS (Landsat + Sentinel-2) pixels inside the field ", badge("measured"),
+    " · crop labels checked against field records ", badge(evLabel("hls_crop_history") || "modelled"));
   show("barcode-section");
 }
 
@@ -270,6 +270,13 @@ function renderPassport() {
   show("passport-section");
 }
 
+function renderHighlights(list) {
+  if (!list || !list.length) return;
+  $("highlights").replaceChildren(...list.map((h) => el("div", { class: "hl" },
+    el("div", { class: "hl-big" }, h.big), el("div", { class: "hl-label" }, h.label),
+    el("div", { class: "hl-note" }, h.note, " ", badge(h.evidence)))));
+}
+
 function renderGaps(p) {
   if (!p.gaps || !p.gaps.length) return;
   $("gaps").replaceChildren(...p.gaps.map((g) => el("li", {}, g)));
@@ -304,6 +311,7 @@ async function main() {
     await loadField(first, buttons);
     renderPassport();
     renderFigures(index.figures);
+    renderHighlights(index.highlights);
     $("loading").remove();
   } catch (err) {
     $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +

@@ -88,3 +88,12 @@ def test_current_rotation_uses_measured_cover_and_robustness_is_recomputed():
     assert css["risk_heavy_rain_on_bare_soil"] == 0.0 and css["climate_risk_total"] < before   # no bare soil, no rain-on-bare risk
     assert [c for c in pub["rotation_options"]["candidates"] if c["key"] == "SWC"][0]["cover_evidence"] == "modelled"
     assert abs(sum(pub["rotation_options"]["robustness_best_share"].values()) - 1) < 0.01
+
+
+def test_highlights_compare_conventional_and_diverse():
+    def pub(cur, bare, green, nxt):
+        return {"rotation_options": {"current": cur, "next_crop_2026": nxt,
+                                     "measured_cover": {"spring_bare_share": bare, "green_share_off_season": green}},
+                "climate_odds": {"risks": {"heavy_rain_on_bare_soil": {"share": 0.26, "past_years": "7 of 30"}}}}
+    h = export.highlights([pub("CSS", 1.0, 0.03, "corn or soybean (ask)"), pub("SWC+covers", 0.64, 0.39, "winter wheat")])
+    assert [x["big"] for x in h] == ["100% vs 64%", "3% vs 39%", "26 in 100", "Winter wheat"]
