@@ -13,12 +13,19 @@
 <body>
   <header class="top">
     <div class="wrap">
-      <p class="eyebrow">NASA Space Apps 2026 · Elora Research Station, Ontario</p>
+      <p class="eyebrow">NASA Space Apps 2026 · Team Star Farmer · Elora Research Station, Ontario</p>
       <h1>FieldSense</h1>
-      <p class="lede">A field's past, read from space, to choose its next rotation. Every number shows how we know it.</p>
-      <nav class="plots" id="plot-tabs" aria-label="Choose a field"></nav>
+      <p class="lede">Which crop rotation protects your soil, and how risky is next season? Read from NASA satellites, with the evidence behind every number.</p>
+      <div class="highlights" id="highlights"></div>
     </div>
   </header>
+
+  <div class="tabs-bar">
+    <div class="wrap">
+      <span class="tabs-label">Explore a field</span>
+      <nav class="plots" id="plot-tabs" aria-label="Choose a field"></nav>
+    </div>
+  </div>
 
   <main class="wrap" id="app">
     <p class="loading" id="loading">Loading field data…</p>
@@ -28,42 +35,51 @@
     </section>
 
     <section id="barcode-section" hidden>
-      <h2>The field barcode</h2>
-      <p class="section-lede">Each stripe is one year, January to December. <span class="sw bare"></span> brown = bare soil, <span class="sw green"></span> green = growing plants, <span class="sw none"></span> grey = no clear satellite view. Hover to read a day.</p>
+      <h2>Ten years of this field, seen from space</h2>
+      <p class="section-lede">Each stripe is one year, January to December: <span class="sw bare"></span> bare soil, <span class="sw green"></span> growing plants, <span class="sw none"></span> no clear view. Hover to read a day.</p>
       <div class="barcode-box"><svg id="barcode" role="img" aria-label="Field barcode: greenness of this field every day, one row per year"></svg><div class="tip" id="tip" hidden></div></div>
       <p class="evidence-line" id="barcode-evidence"></p>
-      <h3>Living cover, year by year</h3>
-      <p class="section-lede small">Share of days outside the main crop season (before mid-May and after September) when the field was green. Higher means the soil was protected more often.</p>
+      <h3>Living cover outside summer, year by year</h3>
       <div id="cover-chart"></div>
     </section>
 
     <section id="odds-section" hidden>
       <h2>2026: what the weather could do</h2>
-      <p class="section-lede">1,000 possible 2026 seasons built from 30 years of corrected NASA weather, brought to today's warmth. Each square is 1 season in 100. Shown next to how often it really happened.</p>
+      <p class="section-lede">Out of 100 possible seasons, how many bring each risk.</p>
       <div class="odds-grid" id="odds-grid"></div>
-      <p class="evidence-line" id="odds-evidence"></p>
+      <details class="more">
+        <summary>How these odds are made</summary>
+        <p>1,000 possible 2026 seasons, each built from one of 30 real years (1996–2025) of NASA POWER weather, corrected against Environment Canada stations and brought to today's warmth. Each card also shows how often the risk really happened in those 30 years.</p>
+        <p class="evidence-line" id="odds-evidence"></p>
+      </details>
     </section>
 
     <section id="rotation-section" hidden>
-      <h2>Rotation options</h2>
-      <p class="section-lede">A trade-off table, not one magic score: which rotation is "best" depends on what the farmer values.</p>
+      <h2>Comparing rotations</h2>
+      <p class="section-lede">No single score: the best rotation depends on what the farmer values.</p>
       <div class="table-scroll"><table class="tradeoff" id="tradeoff"></table></div>
-      <h3>How robust is the choice?</h3>
-      <p class="section-lede small">We tried 2,000 random ways of weighing the criteria. Bars show how often each rotation came out best.</p>
+      <h3>Best choice under 2,000 different priorities</h3>
       <div id="robust"></div>
-      <p class="note" id="not-included"></p>
+      <details class="more">
+        <summary>How to read this</summary>
+        <p>We weighed the criteria in 2,000 random ways (soil first, simplicity first, and everything in between) and counted how often each rotation came out best. A high share means the choice barely depends on priorities.</p>
+        <p class="note" id="not-included"></p>
+      </details>
     </section>
 
     <section id="explain-section" hidden>
-      <h2>In plain words</h2>
-      <div class="explain-grid" id="explain-grid"></div>
+      <details class="more big">
+        <summary>Why? The reasoning in plain words</summary>
+        <div class="explain-grid" id="explain-grid"></div>
+      </details>
     </section>
 
     <section id="passport-section" hidden>
-      <h2>Evidence passport</h2>
-      <p class="section-lede">Every source, how far to trust it, and how it was checked.</p>
-      <div class="legend" id="legend"></div>
-      <div class="passport" id="passport"></div>
+      <details class="more big">
+        <summary>How we know: the evidence passport</summary>
+        <div class="legend" id="legend"></div>
+        <div class="passport" id="passport"></div>
+      </details>
     </section>
 
     <section id="figures-section" hidden>
@@ -79,7 +95,7 @@
 
   <footer class="wrap foot">
     <p><strong>Data:</strong> NASA POWER · NASA HLS (Landsat 8/9 + Sentinel-2) · NASA SMAP L4 via AppEEARS · ISRIC SoilGrids 2.0 · Environment and Climate Change Canada stations 4760, 41983. Field records used only for aggregate validation.</p>
-    <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a></p>
+    <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a> · How it works: <a href="https://github.com/SetarehAlamdar/FieldSense/blob/main/METHODS.md">METHODS.md</a></p>
   </footer>
   <script src="app.js"></script>
 </body>
