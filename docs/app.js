@@ -37,6 +37,8 @@ const svg = (tag, attrs = {}) => {
 const badge = (label) => el("span", { class: `badge ${label}`, title: LABEL_TEXT[label] || "" }, label || "unknown");
 const evLabel = (id) => (evidence[id] && evidence[id].label) || null;
 const pct = (x) => `${Math.round(100 * x)}%`;
+// image address; in the single-file preview, images are packed inside the page (__I)
+const asset = (name) => ((typeof __I !== "undefined" && __I[DATA + name]) || DATA + name);
 const nice = (t) => (t || "").replace(/ ?degC/g, " °C");
 const show = (id) => { $(id).hidden = false; };
 
@@ -160,7 +162,7 @@ function renderCoverChart(p) {
 function renderFigures(figures) {
   if (!figures || !figures.length) return;
   $("figures").replaceChildren(...figures.map((f) => el("figure", { class: "figure" },
-    el("a", { href: DATA + f.file, target: "_blank", rel: "noopener", title: "Open full size" }, el("img", { src: DATA + f.file, alt: f.title })),
+    el("a", { href: asset(f.file), target: "_blank", rel: "noopener", title: "Open full size" }, el("img", { src: asset(f.file), alt: f.title })),
     el("figcaption", {}, el("strong", {}, f.title), f.caption))));
   show("figures-section");
 }
@@ -270,6 +272,25 @@ function renderPassport() {
   show("passport-section");
 }
 
+async function renderSpace() {
+  let meta;
+  try { meta = await (await fetch(DATA + "space.json")).json(); } catch (e) { return; }
+  if (!meta || !meta.views || !meta.views.length) return;
+  const grid = $("space-grid");
+  const draw = (mode) => {
+    grid.replaceChildren(...meta.views.map((v) => el("figure", { class: "space-tile" },
+      el("img", { src: asset(v[mode]), alt: `${v.label} ${v.date}, ${mode === "true" ? "true colour" : "greenness"}` }),
+      el("figcaption", {}, el("strong", {}, v.label), ` · ${new Date(v.date + "T12:00:00Z").toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`))));
+    document.querySelectorAll(".space-toggle button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false"));
+  };
+  document.querySelectorAll(".space-toggle button").forEach((b) => { b.onclick = () => draw(b.dataset.mode); });
+  draw("true");
+  const year = meta.views[0].date.slice(0, 4);
+  $("space-lede").textContent = `A ${meta.size_km} × ${meta.size_km} km square around the Elora Research Station through ${year}. Fields turn green and bare at different times depending on their rotation; grey means cloud.`;
+  $("space-note").replaceChildren(meta.source, " ", badge("measured"), meta.note ? ` · ${meta.note}` : "");
+  show("space-section");
+}
+
 function renderHighlights(list) {
   if (!list || !list.length) return;
   $("highlights").replaceChildren(...list.map((h) => el("div", { class: "hl" },
@@ -312,6 +333,7 @@ async function main() {
     renderPassport();
     renderFigures(index.figures);
     renderHighlights(index.highlights);
+    renderSpace();
     $("loading").remove();
   } catch (err) {
     $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +
