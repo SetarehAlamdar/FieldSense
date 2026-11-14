@@ -17,15 +17,16 @@
       "name": "Winter wheat", "family": "grass", "legume": false,
       "green": [[91, 186]],
       "green_previous_fall": [[295, 334]],
-      "sensitive_to": [],
-      "note": "Sown in early October after soybean; harvested in July, before peak heat and summer dry spells. Wheat-specific risks (winterkill, wet-June disease) are not modelled."
+      "sensitive_to": ["late_spring_frost", "summer_dry_spell"],
+      "note": "Sown in early October after soybean; harvested in July, so it escapes the corn-pollination heat window. Exposed to frost at heading (late May - early June) and to a dry June during grain fill. Wheat-specific risks (winterkill, wet-June disease) are not modelled."
     }
   },
   "covers": {
     "red_clover": {
       "name": "Red clover (underseeded in wheat)", "legume": true,
       "green_fall": [[227, 334]], "green_next_spring": [[91, 135]],
-      "note": "Frost-seeded into wheat in early spring; grows after wheat harvest; terminated before the next crop."
+      "sensitive_to": ["summer_dry_spell"],
+      "note": "Frost-seeded into wheat in early spring; grows after wheat harvest; terminated before the next crop. A dry summer hurts its establishment."
     },
     "cereal_rye": {
       "name": "Cereal rye (after soybean)", "legume": false,

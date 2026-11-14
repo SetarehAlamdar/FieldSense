@@ -108,7 +108,8 @@ def climate_exposure(rot, odds, table=None):
 
     exposure(risk) = average over rotation years of  P(risk in a season) x (crop exposed? 1 : 0)
     Heavy rain on bare soil uses the bare SHARE of the spring window instead of 0/1.
-    A cover crop that needs fall warmth is exposed to the short-fall risk.
+    A cover crop is exposed to the risks in its `sensitive_to` list (in the year it's sown),
+    and one that needs fall warmth is exposed to the short-fall risk.
     `odds` = profile["climate_odds"] (see climate.py).
     """
     t = table or load_crop_table()
@@ -120,7 +121,8 @@ def climate_exposure(rot, odds, table=None):
             continue
         hits = [prob if risk in t["crops"][c]["sensitive_to"] else 0.0 for c in rot.crops]
         for i, cover in rot.covers.items():
-            if t["covers"][cover].get("needs_fall_warmth") == risk:
+            c = t["covers"][cover]
+            if risk in c.get("sensitive_to", []) or c.get("needs_fall_warmth") == risk:
                 hits[i] = max(hits[i], prob)
         out[risk] = float(np.mean(hits))
     out = {k: round(100 * v, 1) for k, v in out.items() if not k.startswith("short_fall_for_cover")}
