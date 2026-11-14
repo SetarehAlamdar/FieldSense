@@ -42,6 +42,18 @@ a { color: var(--accent); }
 .space-tile figcaption { font-size: .86rem; color: var(--muted); margin-top: 6px; }
 .space-tile figcaption strong { color: var(--ink); }
 
+/* Plot-by-date grid */
+.plotgrid-box { margin-bottom: 4px; }
+table.plotgrid { border-collapse: separate; border-spacing: 8px; width: 100%; min-width: 560px; }
+.plotgrid th { font-size: .82rem; font-weight: 500; color: var(--muted); text-align: center; vertical-align: bottom; }
+.plotgrid th strong { color: var(--ink); font-weight: 600; }
+.plotgrid th.plot-label { text-align: left; font-size: .95rem; color: var(--ink); font-weight: 600; white-space: nowrap; width: 1%; vertical-align: middle; }
+.plotgrid td { padding: 0; text-align: center; }
+.plotgrid td img { width: 100%; max-width: 112px; aspect-ratio: 1; object-fit: contain; image-rendering: pixelated; display: inline-block; }
+.design { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.design.simple { color: var(--simple); } .design.diverse { color: var(--diverse); }
+.compare-top { padding-top: 6px; padding-bottom: 24px; }
+
 /* Simple vs diverse strip */
 :root { --simple: #9a6a3a; --diverse: #2f6b34; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --simple: #d2a272; --diverse: #8fc98a; } }

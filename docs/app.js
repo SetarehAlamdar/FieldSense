@@ -275,19 +275,39 @@ function renderPassport() {
 async function renderSpace() {
   let meta;
   try { meta = await (await fetch(DATA + "space.json")).json(); } catch (e) { return; }
-  if (!meta || !meta.views || !meta.views.length) return;
-  const grid = $("space-grid");
+  if (!meta) return;
+  const fmtDate = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-CA", { month: "short", day: "numeric", timeZone: "UTC" });
+  const hasPlots = meta.plots && meta.plots.rows && meta.plots.rows.length;
+  const hasWide = meta.views && meta.views.length;
+  if (!hasPlots && !hasWide) return;
   const draw = (mode) => {
-    grid.replaceChildren(...meta.views.map((v) => el("figure", { class: "space-tile" },
-      el("img", { src: asset(v[mode]), alt: `${v.label} ${v.date}, ${mode === "true" ? "true colour" : "greenness"}` }),
-      el("figcaption", {}, el("strong", {}, v.label), ` · ${new Date(v.date + "T12:00:00Z").toLocaleDateString("en-CA", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`))));
+    if (hasPlots) {
+      const head = el("tr", {}, el("th", {}, ""), ...meta.plots.dates.map((d) => el("th", {}, el("strong", {}, d.label), el("br"), fmtDate(d.date))));
+      const body = meta.plots.rows.map((r) => el("tr", { class: r.design },
+        el("th", { class: "plot-label" }, `Plot ${r.plot}`, el("br"), el("span", { class: `design ${r.design}` }, r.design)),
+        ...r.tiles.map((t, i) => el("td", {}, el("img", { src: asset(t[mode]),
+          alt: `Plot ${r.plot} (${r.design}), ${meta.plots.dates[i].label}, ${mode === "true" ? "true colour" : "greenness"}` })))));
+      $("plotgrid").replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+    }
+    if (hasWide) {
+      $("space-grid").replaceChildren(...meta.views.map((v) => el("figure", { class: "space-tile" },
+        el("img", { src: asset(v[mode]), alt: `${v.label}, ${mode === "true" ? "true colour" : "greenness"}` }),
+        el("figcaption", {}, el("strong", {}, v.label), ` · ${fmtDate(v.date)}`))));
+    }
     document.querySelectorAll(".space-toggle button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false"));
   };
   document.querySelectorAll(".space-toggle button").forEach((b) => { b.onclick = () => draw(b.dataset.mode); });
   draw("true");
-  const year = meta.views[0].date.slice(0, 4);
-  $("space-lede").textContent = `A ${meta.size_km} × ${meta.size_km} km square around the Elora Research Station through ${year}. Fields turn green and bare at different times depending on their rotation; grey means cloud.`;
-  $("space-note").replaceChildren(meta.source, " ", badge("measured"), meta.note ? ` · ${meta.note}` : "");
+  const dates = hasPlots ? meta.plots.dates : meta.views;
+  const year = dates[0].date.slice(0, 4);
+  $("space-lede").textContent = hasPlots
+    ? `Each square is one plot on a clear day in ${year}. Watch October: the simple plots are bare, the diverse plots are still green. Grey means cloud.`
+    : `A ${meta.size_km} × ${meta.size_km} km square around the Elora Research Station through ${year}. Grey means cloud.`;
+  if (!hasPlots) { $("plotgrid").closest(".plotgrid-box").hidden = true; }
+  if (hasWide && hasPlots) $("wide-details").hidden = false;
+  if (hasWide && !hasPlots) { const d = $("wide-details"); d.hidden = false; d.open = true; }
+  $("space-note").replaceChildren(meta.source || "NASA HLS", " ", badge("measured"),
+    hasPlots && meta.plots.note ? ` · ${meta.plots.note}` : "");
   show("space-section");
 }
 
