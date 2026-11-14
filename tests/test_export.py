@@ -97,3 +97,4 @@ def test_highlights_compare_conventional_and_diverse():
                 "climate_odds": {"risks": {"heavy_rain_on_bare_soil": {"share": 0.26, "past_years": "7 of 30"}}}}
     h = export.highlights([pub("CSS", 1.0, 0.03, "corn or soybean (ask)"), pub("SWC+covers", 0.64, 0.39, "winter wheat")])
     assert [x["big"] for x in h] == ["100% vs 64%", "3% vs 39%", "26 in 100", "Winter wheat"]
+    assert (h[0]["simple"], h[0]["diverse"]) == (100, 64)
