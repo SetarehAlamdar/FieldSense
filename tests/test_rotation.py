@@ -94,3 +94,13 @@ def test_diversity_has_a_cost_so_the_ranking_is_a_real_trade_off():
     assert t.loc["SWC+clover", "crops_to_manage"] > t.loc["CS", "crops_to_manage"]
     simplicity_first = rt.weighted_ranking(t, {"crops_to_manage": 1})
     assert simplicity_first.index[0] == "CS"
+
+
+def test_wheat_and_clover_are_exposed_to_spring_frost_and_dry_spells():
+    wheat_only = rt.Rotation("W", "Wheat", ["winter_wheat"])
+    ex = rt.climate_exposure(wheat_only, ODDS)
+    assert ex["late_spring_frost"] > 0 and ex["summer_dry_spell"] > 0
+    assert ex["pollination_heat"] == 0                          # harvested before corn pollination
+    no_clover = rt.climate_exposure(CAND["SWC"], ODDS)["summer_dry_spell"]
+    with_clover = rt.climate_exposure(CAND["SWC+clover"], ODDS)["summer_dry_spell"]
+    assert with_clover >= no_clover                             # clover can't make dry-spell exposure smaller
