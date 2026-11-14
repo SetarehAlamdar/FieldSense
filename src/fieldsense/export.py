@@ -98,12 +98,14 @@ def highlights(pubs):
     out = []
     if "conventional" in groups and "diverse" in groups:
         mean = lambda g, k: 100 * np.mean([ro["measured_cover"][k] for ro in groups[g]])
-        out.append({"big": f"{mean('conventional', 'spring_bare_share'):.0f}% vs {mean('diverse', 'spring_bare_share'):.0f}%",
+        out.append({"simple": round(mean('conventional', 'spring_bare_share')), "diverse": round(mean('diverse', 'spring_bare_share')),
+                    "big": f"{mean('conventional', 'spring_bare_share'):.0f}% vs {mean('diverse', 'spring_bare_share'):.0f}%",
                     "label": "Soil left bare when spring storms hit",
-                    "note": "conventional vs diverse rotation, seen by satellite since 2018", "evidence": "measured"})
-        out.append({"big": f"{mean('conventional', 'green_share_off_season'):.0f}% vs {mean('diverse', 'green_share_off_season'):.0f}%",
+                    "note": "simple vs diverse rotation, seen by satellite since 2018", "evidence": "measured"})
+        out.append({"simple": round(mean('conventional', 'green_share_off_season')), "diverse": round(mean('diverse', 'green_share_off_season')),
+                    "big": f"{mean('conventional', 'green_share_off_season'):.0f}% vs {mean('diverse', 'green_share_off_season'):.0f}%",
                     "label": "Living cover outside the summer season",
-                    "note": "conventional vs diverse: roots protecting the soil in spring and fall", "evidence": "measured"})
+                    "note": "simple vs diverse: roots protecting the soil in spring and fall", "evidence": "measured"})
     risks = ((pubs[0].get("climate_odds") or {}).get("risks") or {}) if pubs else {}
     if "heavy_rain_on_bare_soil" in risks:
         r = risks["heavy_rain_on_bare_soil"]
