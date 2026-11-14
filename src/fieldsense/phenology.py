@@ -136,3 +136,26 @@ def cover_summary(matrix, season=(60, 334)):
         "green_days_off_season": (matrix[off] >= GREEN_FROM).sum(axis=1),
     }).assign(green_share_off_season=lambda t: (t.green_days_off_season /
                                                 t.observed_days_off_season.where(t.observed_days_off_season > 0)).round(3))
+
+
+def measured_cover_shares(matrix, since=2018, season=(60, 334), spring=(105, 166)):
+    """Soil cover measured by satellite, in the same terms as the rotation calendar model.
+
+    Shares of OBSERVED days only (cloud gaps don't count as bare):
+      green_share_season      green (NDVI >= 0.40) during 1 Mar - 30 Nov
+      green_share_off_season  green outside the main summer season (MAIN_SEASON)
+      spring_bare_share       not green during 15 Apr - 15 Jun (when spring storms hit bare soil)
+    """
+    m = matrix[matrix.index >= since].values.astype(float)
+    doy = np.arange(1, m.shape[1] + 1)
+    in_season = (doy >= season[0]) & (doy <= season[1])
+    off = in_season & ~((doy >= MAIN_SEASON[0]) & (doy <= MAIN_SEASON[1]))
+    spr = (doy >= spring[0]) & (doy <= spring[1])
+
+    def green_share(mask):
+        seen = np.isfinite(m[:, mask])
+        return float((m[:, mask][seen] >= GREEN_FROM).mean()) if seen.any() else float("nan")
+
+    return {"green_share_season": green_share(in_season),
+            "green_share_off_season": green_share(off),
+            "spring_bare_share": 1 - green_share(spr)}
