@@ -35,7 +35,7 @@ How each part of the data is produced and checked. Every step is a function in `
 
 ## 5. Rotation comparison
 
-- **Candidates** (`rotation.py`): corn–soybean; corn–soybean + cereal rye; soybean–winter wheat–corn; soybean–winter wheat + red clover–corn.
+- **Candidates** (`rotation.py`), all 3-year cycles as in the Elora trial: corn–soybean–soybean (conventional); corn–soybean–soybean + cereal rye before corn; soybean–winter wheat–corn; soybean–winter wheat + red clover–corn + cereal rye (diverse). The satellite can't tell corn from soybean, so the conventional sequence comes from the trial design.
 - **Metrics:** off-season living cover, bare share in spring, 2026 climate exposure (risk probability × crop sensitivity, averaged over the cycle), legume share, years between the same crop, crops to manage (a cost).
 - **Soil cover for rotations a field hasn't tried** comes from a crop-calendar model (`data/crops.json`). For the field's current rotation the satellite measurement is used instead. The model is compared with satellite measurements on the two rotations grown at Elora, with a 10-point acceptance rule set in advance.
 - **Robustness:** 2,000 random weightings of the criteria (Dirichlet(1,…,1)); the share of weightings under which each rotation is best. Yield, profit and labour are not included yet, which favours diverse rotations; this is stated on the page.

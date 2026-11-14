@@ -53,12 +53,16 @@ class Rotation:
         return len(self.crops)
 
 
+# The Elora rotation trial: a conventional corn-soybean-soybean rotation and a diverse
+# soybean-winter wheat-corn rotation with cover crops after wheat and after corn,
+# plus the two "halfway" options between them.
 CANDIDATES = [
-    Rotation("CS", "Corn - soybean", ["corn", "soybean"]),
-    Rotation("CS+rye", "Corn - soybean + cereal rye after soybean", ["corn", "soybean"], {1: "cereal_rye"}),
+    Rotation("CSS", "Corn - soybean - soybean", ["corn", "soybean", "soybean"]),
+    Rotation("CSS+rye", "Corn - soybean - soybean + cereal rye before corn", ["corn", "soybean", "soybean"],
+             {2: "cereal_rye"}),
     Rotation("SWC", "Soybean - winter wheat - corn", ["soybean", "winter_wheat", "corn"]),
-    Rotation("SWC+clover", "Soybean - winter wheat + red clover - corn", ["soybean", "winter_wheat", "corn"],
-             {1: "red_clover"}),
+    Rotation("SWC+covers", "Soybean - winter wheat + red clover - corn + cereal rye",
+             ["soybean", "winter_wheat", "corn"], {1: "red_clover", 2: "cereal_rye_after_corn"}),
 ]
 
 
@@ -135,8 +139,9 @@ def agronomy_metrics(rot, table=None):
     """Simple, exact facts about the sequence itself (no data needed)."""
     t = table or load_crop_table()
     n = len(rot)
-    legume_years = sum(t["crops"][c]["legume"] for c in rot.crops)
-    legume_covers = sum(t["covers"][c]["legume"] for c in rot.covers.values())
+    # a year counts once if it has a legume crop OR a legume cover, so the share can't exceed 100%
+    legume_years = sum(t["crops"][c]["legume"] or (i in rot.covers and t["covers"][rot.covers[i]]["legume"])
+                       for i, c in enumerate(rot.crops))
     gaps = []
     for crop in set(rot.crops):
         idx = [i for i, c in enumerate(rot.crops) if c == crop]
@@ -144,7 +149,7 @@ def agronomy_metrics(rot, table=None):
     return {
         "years_in_cycle": n,
         "crop_families": len({t["crops"][c]["family"] for c in rot.crops}),
-        "legume_share": round((legume_years + legume_covers) / n, 3),
+        "legume_share": round(legume_years / n, 3),
         "min_years_between_same_crop": int(min(gaps)),
         "crops_to_manage": len(set(rot.crops)) + len(set(rot.covers.values())),
     }
@@ -210,14 +215,18 @@ def rank_robustness(table, criteria=None, n=2000, seed=0):
 
 # ------------------------------------------------------------------ the field's own rotation
 def detect_current(history, recent_years=6):
-    """Which candidate the field has been following, from the satellite history (profile["history"])."""
+    """Which candidate the field has been following, from the satellite history (profile["history"]).
+
+    The satellite sees wheat and off-season cover, but can't tell corn from soybean, so a
+    field without wheat is matched to the corn-soybean-soybean design of the Elora trial.
+    """
     recent = sorted(history, key=lambda h: h["year"])[-recent_years:]
     says = [h["satellite_says"] for h in recent]
     has_wheat = any(s.startswith("winter wheat") for s in says)
     has_cover = any("green after harvest" in s or "green in spring" in s for s in says)
     if has_wheat:
-        return "SWC+clover" if has_cover else "SWC"
-    return "CS+rye" if has_cover else "CS"
+        return "SWC+covers" if has_cover else "SWC"
+    return "CSS+rye" if has_cover else "CSS"
 
 
 def next_crop(rotation_key, history, target_year=2026):

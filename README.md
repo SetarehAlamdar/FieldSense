@@ -23,7 +23,7 @@ For each field, FieldSense:
 | **Modelled** | From a model not checked at this field | SoilGrids soil texture, SMAP L4 soil moisture |
 | **Assumed** | From literature or expert rules | Risk thresholds, crop calendars |
 
-The pilot site is the Elora Research Station (Ontario, Canada): two simple corn–soybean plots and two diverse soybean–wheat–corn plots with cover crops. How the data is produced and checked is described in [METHODS.md](METHODS.md).
+The pilot site is the Elora Research Station (Ontario, Canada): two conventional corn–soybean–soybean plots and two diverse soybean–wheat–corn plots with cover crops after wheat and after corn. How the data is produced and checked is described in [METHODS.md](METHODS.md).
 
 ## Repository layout
 

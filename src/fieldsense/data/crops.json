@@ -28,6 +28,11 @@
       "sensitive_to": ["summer_dry_spell"],
       "note": "Frost-seeded into wheat in early spring; grows after wheat harvest; terminated before the next crop. A dry summer hurts its establishment."
     },
+    "cereal_rye_after_corn": {
+      "name": "Cereal rye (after corn)", "legume": false,
+      "green_fall": [], "green_next_spring": [[115, 130]],
+      "note": "Sown after corn harvest (late October); too late to green up much before winter, so it covers the soil mainly the next spring, before soybean planting."
+    },
     "cereal_rye": {
       "name": "Cereal rye (after soybean)", "legume": false,
       "green_fall": [[300, 334]], "green_next_spring": [[91, 130]],
