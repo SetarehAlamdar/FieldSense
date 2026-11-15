@@ -354,10 +354,42 @@ def _padded(src, win, inner, fill):
     return out
 
 
-def render_context(rgb, poly_px, size=360, dim=0.5, edge=(255, 255, 255)):
+def neat_outline(poly_px, rect_fill=0.72, grow_px=0.5):
+    """A cleaner field outline from a pixel-staircase one (pixel coordinates).
+
+    Crop-map fields are traced along 30 m pixels, so slanted edges look like stairs. A field
+    whose smallest rotated rectangle stays within about one pixel of it everywhere (the stairs
+    themselves; not a missing corner) is drawn as a rectangle with that orientation and the field's own area; any other
+    shape is smoothed (stairs rounded off). `grow_px` makes up for the ring of edge pixels that
+    was trimmed when the field was found.
+    """
+    from shapely.affinity import scale
+    from shapely.geometry import Polygon
+    p = Polygon(poly_px).buffer(0)
+    if p.is_empty or p.area <= 0:
+        return list(poly_px)
+    if p.geom_type != "Polygon":
+        p = max(p.geoms, key=lambda g: g.area)
+    target = p.buffer(grow_px, join_style=2).area
+    r = p.minimum_rotated_rectangle
+    # a rectangle only if it stays within ~1 pixel of the field everywhere (stairs yes, a missing corner no)
+    outside = r.difference(p.buffer(1.0, join_style=2)).area / r.area if r.area > 0 else 1.0
+    if outside < 0.03 and p.area / r.area >= rect_fill:
+        k = (target / r.area) ** 0.5
+        q = scale(r, k, k, origin=r.centroid)
+    else:
+        q = p.buffer(grow_px, join_style=2).simplify(0.9)                 # straighten stairs, keep corners
+    if q.geom_type != "Polygon":
+        q = max(q.geoms, key=lambda g: g.area)
+    return [tuple(c) for c in q.exterior.coords]
+
+
+def render_context(rgb, poly_px, size=360, dim=0.5, edge=(255, 255, 255), neat=True):
     """Smoothly enlarge a small satellite square and highlight one field: the field keeps its
     colours, the surroundings are dimmed and a little greyer, with a soft white edge."""
     from PIL import Image, ImageDraw, ImageFilter
+    if neat:
+        poly_px = neat_outline(poly_px)
     h, w = rgb.shape[:2]
     img = Image.fromarray(rgb).resize((size, size), Image.BICUBIC)
     ss = 4                                                   # draw the outline 4x larger, then shrink: smooth edges
