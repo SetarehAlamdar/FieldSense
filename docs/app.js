@@ -673,72 +673,22 @@ function miniBarcode(bc, width = 300) {
 
 function climateBox(c) {
   if (!c) return "";
-  const st = c.station, cor = c.correction || {}, sm = c.summary || {};
-  const stLine = st ? `Nearest Environment Canada station with a long record: ${st.name} (${st.km} km away). ` : "No usable station nearby: NASA POWER uncorrected. ";
+  const cor = c.correction || {}, sm = c.summary || {};
+  const risks = Object.values(c.odds.risks).sort((a, b) => b.share - a.share);
   const fix = [];
   if (cor.rain) fix.push(`rain error on held-out years ${cor.rain.held_out_error_raw_pct}% → ${cor.rain.held_out_error_corrected_pct}%`);
   if (cor.temperature) fix.push(`night temperature bias ${cor.temperature.bias_raw_c} → ${cor.temperature.bias_corrected_c} °C`);
-  const risks = Object.values(c.odds.risks).sort((a, b) => b.share - a.share);
+  const short = (t) => nice(t).replace(/ \(.*\)$/, "");
   return el("div", { class: "rd-climate" },
-    el("h4", {}, `Next season (${c.odds.target_year}) weather here`),
-    el("p", { class: "rd-sub" }, stLine, fix.length ? `Correction: ${fix.join("; ")}. ` : "", badge(c.evidence)),
-    el("p", { class: "rd-sum" }, `Typical year (${c.years[0]}–${c.years[1]}): ${Math.round(sm.annual_precip_mm)} mm of rain, ${Math.round(sm.gdd10_may_sep)} growing degree-days, ${Math.round(sm.frost_free_days)} frost-free days. Warming ${c.trend.c_per_decade} °C per decade (90% interval ${c.trend.low} to ${c.trend.high}).`),
-    el("div", { class: "rd-odds" }, ...risks.map((k) => el("div", { class: "rd-odd" },
-      el("div", { class: "rd-bar" }, el("span", { style: `width:${Math.round(100 * k.share)}%` })),
-      el("strong", {}, `${Math.round(100 * k.share)} in 100`), el("span", {}, nice(k.text)),
-      el("small", {}, ` (${k.past_years} past years)`)))),
-    el("p", { class: "rd-note" }, "Risk thresholds are rules of thumb for Ontario corn, soybean and wheat ", badge("assumed"),
-      ". Thresholds and rotation options for each province's own crops are the next step."));
-}
-
-// "Try your own field": checks the location, names the nearest measured location, and
-// sends the farmer to the My Field notebook (the full analysis needs NASA login and ~15 min).
-function myFieldPanel(regions, select) {
-  const km = (a, b, c, d) => {
-    const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
-    return 2 * 6371 * Math.asin(Math.sqrt(x));
-  };
-  const APP = "https://setarehalamdar-fieldsense.hf.space/";
-  let marker = null, map = null;
-  const setPoint = (lat, lon) => {
-    $("mf-go").href = `${APP}?loc=${lat.toFixed(5)},${lon.toFixed(5)}`;
-    $("mf-go").textContent = "Read this field in the FieldSense app →";
-    if (map) {
-      if (marker) marker.setLatLng([lat, lon]);
-      else marker = L.circleMarker([lat, lon], { radius: 9, color: "#fff", weight: 3, fillColor: "#e2a33a", fillOpacity: 1 }).addTo(map);
-    }
-  };
-  if (typeof L !== "undefined" && $("mf-map")) {
-    map = L.map("mf-map", { scrollWheelZoom: false }).setView([50.5, -98], 4);
-    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-      maxZoom: 18, attribution: "Imagery © Esri, Maxar, Earthstar Geographics" }).addTo(map);
-    for (const r of regions) L.circleMarker([r.lat, r.lon], { radius: 6, color: "#3b3f99", fillColor: "#5aa58f", fillOpacity: 0.9, weight: 2 })
-      .bindTooltip(`${r.name}: measured`).addTo(map);
-    map.on("click", (e) => {
-      $("mf-loc").value = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
-      $("mf-form").requestSubmit ? $("mf-form").requestSubmit() : $("mf-form").onsubmit(new Event("submit"));
-    });
-    setTimeout(() => map.invalidateSize(), 300);                // the section was hidden while the map was built
-    if ("IntersectionObserver" in window) new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && map.invalidateSize())).observe($("mf-map"));
-  } else if ($("mf-map")) {
-    $("mf-map").closest(".mf-map-box").hidden = true;          // no internet for the map library: typing still works
-  }
-  $("mf-form").onsubmit = (e) => {
-    e.preventDefault();
-    const out = $("mf-out");
-    const m = $("mf-loc").value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
-    if (!m) { out.textContent = "Please paste two numbers: latitude, longitude (for example 50.45, -104.61)."; return; }
-    const lat = +m[1], lon = +m[2];
-    if (!(lat > 41.5 && lat < 60 && lon > -141 && lon < -52)) { out.textContent = "That point isn't in Canada's farmland (latitude 42–60, longitude −141 to −52)."; return; }
-    setPoint(lat, lon);
-    if (map && map.getZoom() < 13) map.setView([lat, lon], 14);
-    const near = regions.map((r) => ({ r, d: km(lat, lon, r.lat, r.lon) })).sort((a, b) => a.d - b.d)[0];
-    out.replaceChildren(`Point ${lat.toFixed(4)}, ${lon.toFixed(4)}. Closest location FieldSense has measured: `,
-      el("button", { type: "button", class: "linkish" }, `${near.r.name} (${near.r.place})`), `, ${Math.round(near.d)} km away. `,
-      "Check the pin is in the middle of your field, then open the app: it starts reading right away.");
-    out.querySelector(".linkish").onclick = () => { select(near.r.region); $("region-detail").scrollIntoView({ behavior: "smooth", block: "start" }); };
-    if (navigator.clipboard) navigator.clipboard.writeText(`${lat}, ${lon}`).then(() => out.append(" (Copied to your clipboard.)"), () => {});
-  };
+    el("h4", {}, `2027 weather here: the three biggest risks `, badge(c.evidence)),
+    el("div", { class: "rd-top3" }, ...risks.slice(0, 3).map((k) => el("div", { class: "rd-risk" },
+      el("strong", {}, `${Math.round(100 * k.share)}`), el("small", {}, " in 100"), el("span", {}, short(k.text))))),
+    el("details", { class: "more rd-more" }, el("summary", {}, "More about the weather"),
+      el("p", {}, fix.length ? `NASA POWER corrected with the station: ${fix.join("; ")}. ` : "No usable station nearby: NASA POWER uncorrected. ",
+        `Typical year (${c.years[0]}–${c.years[1]}): ${Math.round(sm.annual_precip_mm)} mm of rain, ${Math.round(sm.gdd10_may_sep)} growing degree-days, ${Math.round(sm.frost_free_days)} frost-free days. Warming ${c.trend.c_per_decade} °C per decade (90% interval ${c.trend.low} to ${c.trend.high}).`),
+      el("ul", {}, ...risks.map((k) => el("li", {}, `${Math.round(100 * k.share)} in 100: ${nice(k.text)} (${k.past_years} past years)`))),
+      el("p", { class: "rd-note" }, "Risk thresholds are rules of thumb for Ontario corn, soybean and wheat ", badge("assumed"),
+        ". Thresholds and rotation options for each province's own crops are the next step.")));
 }
 
 async function renderCanada() {
@@ -771,19 +721,27 @@ function drawCanada(data) {
     Object.entries(pins).forEach(([k, g]) => g.classList.toggle("on", k === key));
     document.querySelectorAll("#canada-table tbody tr").forEach((tr) => tr.classList.toggle("on", tr.dataset.region === key));
     const t = r.timing;
+    const st = r.climate && r.climate.station;
+    const chip = (txt, cls = "") => el("span", { class: `rd-chip ${cls}` }, txt);
     detail.replaceChildren(
-      el("div", { class: "rd-head" }, el("h3", {}, `${r.name} · ${r.place}`), el("p", { class: "rd-sub" }, `Main crops: ${r.system}. Crop timing read correctly in ${t.agree} of ${t.checked} field-years `, badge(t.evidence === "validated" ? "validated" : "modelled"))),
+      el("div", { class: "rd-head" }, el("h3", {}, `${r.name} · ${r.place}`),
+        el("div", { class: "rd-chips" },
+          chip(`${r.n_simple + r.n_diverse} fields: ${r.n_simple} simple · ${r.n_diverse} diverse`),
+          chip(`Crop reading ${Math.round(100 * (t.share || 0))}% right ${t.evidence === "validated" ? "✓" : ""}`, t.evidence === "validated" ? "ok" : ""),
+          st ? chip(`Station: ${st.name}, ${st.km} km`) : chip("No station: weather uncorrected"))),
       climateBox(r.climate),
       el("div", { class: "rd-fields" }, ...r.fields.map((f) => {
         const yrs = Object.keys(f.crops).map(Number).filter((y) => y >= f.barcode.years[0]).sort();
+        const bc = miniBarcode(f.barcode);
+        bc.setAttribute("title", yrs.map((y) => `${y}: ${f.crops[y]}`).join("\n"));
         return el("div", { class: `rd-field ${f.group}` },
           el("div", { class: "rd-name" }, r.region === "on" ? f.name.replace("Ontario field", "Farm field") : f.name,
             el("span", { class: `design ${f.group}` }, f.group)),
-          el("div", { class: "rd-crops" }, yrs.map((y) => f.crops[y]).join(" → ")),
-          miniBarcode(f.barcode),
-          el("div", { class: "rd-years" }, el("span", {}, "Jan"), el("span", {}, `${f.barcode.years[0]}–${f.barcode.years[f.barcode.years.length - 1]}, one row per year`), el("span", {}, "Dec")),
-          el("div", { class: "rd-nums" }, `Bare ${P(f.cover.bare_share_season)} of the season · green outside summer ${P(f.cover.green_share_off_season)}`));
-      })));
+          bc,
+          el("div", { class: "rd-nums" }, el("span", { class: "c-simple" }, `bare ${P(f.cover.bare_share_season)}`), " · ",
+            el("span", { class: "c-diverse" }, `green off-season ${P(f.cover.green_share_off_season)}`)));
+      })),
+      el("p", { class: "rd-foot" }, `Each card: one field, ${r.fields[0] ? r.fields[0].barcode.years[0] : ""}–2025, one row per year, January to December (brown = bare, green = growing). Hover a barcode for its crops.`));
   };
   const placed = [];                                    // pins already drawn, to keep labels apart
   for (const r of [...data.regions].sort((a, b) => !!a.custom - !!b.custom)) {   // regions first, own places last
