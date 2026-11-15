@@ -17,7 +17,9 @@ EASTERN = {147, 158, 145}          # corn, soybean, winter wheat: the systems th
 
 
 def field_at_point(lon, lat, cache_dir, years=range(2019, 2026), half_size_m=1500, recent=5, min_ha=2):
-    """The crop-map field that contains (lon, lat), or None (not farmland / too small).
+    """The crop-map field that contains (lon, lat), or None (too small).
+
+    If the point is not farmland (a town, water, forest...), returns {"farmland": False, "land": ...}.
 
     Returns {"lonlat", "area_ha", "codes", "crops", "purity", "group"}; group is "simple",
     "diverse" or None (by `canada.rotation_group`).
@@ -54,11 +56,14 @@ def field_at_point(lon, lat, cache_dir, years=range(2019, 2026), half_size_m=150
         vals, cnt = np.unique(a[comp], return_counts=True)
         seq.append(int(vals[cnt.argmax()]))
         pur.append(round(float(cnt.max() / cnt.sum()), 2))
+    if sum(c in ca.FARM_CODES for c in seq[-recent:]) < 3:      # a town, a road, water, forest...
+        land = max(set(seq[-recent:]), key=seq[-recent:].count)
+        return {"farmland": False, "land": ca.crop_name(land), "area_ha": round(area, 1)}
     tr = from_origin(xmin, ymax, aci.PIXEL_M, aci.PIXEL_M)
     polys = [shape(g) for g, v in shapes(comp.astype("uint8"), mask=comp, transform=tr) if v == 1]
     poly = max(polys, key=lambda p: p.area).simplify(aci.PIXEL_M / 2)
     to_ll = Transformer.from_crs(f"EPSG:{epsg}", "EPSG:4326", always_xy=True).transform
-    return {"lonlat": [list(to_ll(px, py)) for px, py in poly.exterior.coords], "area_ha": round(area, 1),
+    return {"farmland": True, "lonlat": [list(to_ll(px, py)) for px, py in poly.exterior.coords], "area_ha": round(area, 1),
             "codes": {int(yr): c for yr, c in zip(years, seq)},
             "crops": {int(yr): ca.crop_name(c) for yr, c in zip(years, seq)},
             "purity": {int(yr): p for yr, p in zip(years, pur)},

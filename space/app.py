@@ -143,6 +143,10 @@ def run(location):
         if field is None:
             yield ("**No farm field found at this point.** Move the point to the middle of a field and try again.", *empty)
             return
+        if not field.get("farmland", True):
+            yield (f"**This point is {field['land']} on Canada's crop map, not a farm field.** "
+                   "In Google Maps (Satellite view), right-click in the middle of a field and paste that location.", *empty)
+            return
         yield (f"Found a {field['area_ha']} ha field. Getting next season's weather from the nearest station (1–2 minutes)…", *empty)
         clim = aw.climate_for_point(lat, lon, cache_dir=CACHE)
         yield ("Reading every clear NASA satellite image of your field since 2023 (5–10 minutes)…", None, "", weather_md(clim), "")
