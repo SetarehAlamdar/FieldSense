@@ -191,6 +191,22 @@ with gr.Blocks(title="FieldSense: your field") as demo:
     go.click(run, inputs=loc, outputs=[status, plot, hist, wx, rot])
     loc.submit(run, inputs=loc, outputs=[status, plot, hist, wx, rot])
 
+    # Opened from the FieldSense website with ?loc=lat,lon: fill the box and start reading.
+    def from_address(request: gr.Request):
+        try:
+            return (request.query_params.get("loc") or "").strip()
+        except Exception:
+            return ""
+
+    def run_if_given(location):
+        if not (location or "").strip():
+            yield ("", None, "", "", "")
+            return
+        yield from run(location)
+
+    demo.load(from_address, inputs=None, outputs=loc).then(run_if_given, inputs=loc,
+                                                           outputs=[status, plot, hist, wx, rot])
+
 demo.queue(default_concurrency_limit=2)
 
 if __name__ == "__main__":

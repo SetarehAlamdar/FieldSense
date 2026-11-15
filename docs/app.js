@@ -693,6 +693,31 @@ function myFieldPanel(regions, select) {
     const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
     return 2 * 6371 * Math.asin(Math.sqrt(x));
   };
+  const APP = "https://setarehalamdar-fieldsense.hf.space/";
+  let marker = null, map = null;
+  const setPoint = (lat, lon) => {
+    $("mf-go").href = `${APP}?loc=${lat.toFixed(5)},${lon.toFixed(5)}`;
+    $("mf-go").textContent = "Read this field in the FieldSense app →";
+    if (map) {
+      if (marker) marker.setLatLng([lat, lon]);
+      else marker = L.circleMarker([lat, lon], { radius: 9, color: "#fff", weight: 3, fillColor: "#e2a33a", fillOpacity: 1 }).addTo(map);
+    }
+  };
+  if (typeof L !== "undefined" && $("mf-map")) {
+    map = L.map("mf-map", { scrollWheelZoom: false }).setView([50.5, -98], 4);
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18, attribution: "Imagery © Esri, Maxar, Earthstar Geographics" }).addTo(map);
+    for (const r of regions) L.circleMarker([r.lat, r.lon], { radius: 6, color: "#3b3f99", fillColor: "#5aa58f", fillOpacity: 0.9, weight: 2 })
+      .bindTooltip(`${r.name}: measured`).addTo(map);
+    map.on("click", (e) => {
+      $("mf-loc").value = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+      $("mf-form").requestSubmit ? $("mf-form").requestSubmit() : $("mf-form").onsubmit(new Event("submit"));
+    });
+    setTimeout(() => map.invalidateSize(), 300);                // the section was hidden while the map was built
+    if ("IntersectionObserver" in window) new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && map.invalidateSize())).observe($("mf-map"));
+  } else if ($("mf-map")) {
+    $("mf-map").closest(".mf-map-box").hidden = true;          // no internet for the map library: typing still works
+  }
   $("mf-form").onsubmit = (e) => {
     e.preventDefault();
     const out = $("mf-out");
@@ -700,10 +725,12 @@ function myFieldPanel(regions, select) {
     if (!m) { out.textContent = "Please paste two numbers: latitude, longitude (for example 50.45, -104.61)."; return; }
     const lat = +m[1], lon = +m[2];
     if (!(lat > 41.5 && lat < 60 && lon > -141 && lon < -52)) { out.textContent = "That point isn't in Canada's farmland (latitude 42–60, longitude −141 to −52)."; return; }
+    setPoint(lat, lon);
+    if (map && map.getZoom() < 13) map.setView([lat, lon], 14);
     const near = regions.map((r) => ({ r, d: km(lat, lon, r.lat, r.lon) })).sort((a, b) => a.d - b.d)[0];
     out.replaceChildren(`Point ${lat.toFixed(4)}, ${lon.toFixed(4)}. Closest location FieldSense has measured: `,
       el("button", { type: "button", class: "linkish" }, `${near.r.name} (${near.r.place})`), `, ${Math.round(near.d)} km away. `,
-      "For your own field, open the FieldSense app and paste this location.");
+      "Check the pin is in the middle of your field, then open the app: it starts reading right away.");
     out.querySelector(".linkish").onclick = () => { select(near.r.region); $("region-detail").scrollIntoView({ behavior: "smooth", block: "start" }); };
     if (navigator.clipboard) navigator.clipboard.writeText(`${lat}, ${lon}`).then(() => out.append(" (Copied to your clipboard.)"), () => {});
   };

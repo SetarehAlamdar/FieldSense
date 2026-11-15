@@ -506,3 +506,10 @@ table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px
 .nav-links { gap: 22px; }
 .nav-links a { white-space: nowrap; }
 @media (max-width: 1180px) { .nav-links a:nth-child(-n+2) { display: none; } }
+
+/* Try your own field: satellite map */
+.myfield { grid-template-columns: 1fr 1fr; }
+.mf-text { grid-column: 1 / -1; }
+.mf-map { height: 340px; border-radius: 12px; overflow: hidden; background: #1d2a1f; }
+.mf-hint { font-size: .85rem; color: var(--muted); margin: 6px 0 0; }
+.leaflet-container { font: inherit; }
