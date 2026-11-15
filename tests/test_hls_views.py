@@ -139,3 +139,14 @@ def test_farm_grid_can_use_the_surroundings_view(tmp_path):
     tile = meta["farms"]["rows"][0]["tiles"][0]
     assert meta["farms"]["view"] == "context" and tile["green"].endswith(".jpg")
     assert (tmp_path / tile["true"]).exists()
+
+
+
+def test_context_view_near_the_tile_edge_is_padded(tmp_path):
+    from pyproj import Transformer
+    to_ll = Transformer.from_crs("EPSG:32617", "EPSG:4326", always_xy=True).transform
+    square = lambda x, y, s: [to_ll(x, y), to_ll(x + s, y), to_ll(x + s, y + s), to_ll(x, y + s), to_ll(x, y)]
+    links = _write_granule(tmp_path, red=400, nir=3000, fmask=0, n=40)        # a small 1.2 km tile
+    v = hls_views.read_field_context(links, {1: square(X0 - 500, Y0 - 100, 200)}, half_size_m=500)[1]
+    assert v["red"].shape == (33, 33) or v["red"].shape == (34, 34)
+    assert v["bad"][:, 0].all() and not v["bad"][16, 20]                       # outside the tile = missing

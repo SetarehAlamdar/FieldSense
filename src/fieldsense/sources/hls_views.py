@@ -311,18 +311,21 @@ def read_field_context(links, fields_lonlat, half_size_m=500):
         with hls._open(links["red"]) as src:
             geoms = hls.plots_in_crs(fields_lonlat, src.crs, inner_buffer_m=0)
             wins = {}
+            full = Window(0, 0, src.width, src.height)
             for fid, g in geoms.items():
                 c = g.centroid
                 w = from_bounds(c.x - half_size_m, c.y - half_size_m, c.x + half_size_m, c.y + half_size_m, transform=src.transform)
                 win = Window(int(round(w.col_off)), int(round(w.row_off)), int(round(w.width)), int(round(w.height)))
-                wins[fid] = (win, src.window_transform(win))
-            bands = {fid: {"red": src.read(1, window=win, boundless=True, fill_value=NODATA)} for fid, (win, _) in wins.items()}
+                # read only the part inside the image tile (boundless reads fail on remote files) and pad the rest
+                inner = win.intersection(full)
+                wins[fid] = (win, src.window_transform(win), inner)
+            bands = {fid: {"red": _padded(src, win, inner, NODATA)} for fid, (win, _, inner) in wins.items()}
         for key in ("green", "blue", "nir", "fmask"):
             with hls._open(links[key]) as src:
-                for fid, (win, _) in wins.items():
-                    bands[fid][key] = src.read(1, window=win, boundless=True, fill_value=255 if key == "fmask" else NODATA)
+                for fid, (win, _, inner) in wins.items():
+                    bands[fid][key] = _padded(src, win, inner, 255 if key == "fmask" else NODATA)
     for fid, b in bands.items():
-        win, tr = wins[fid]
+        win, tr, _ = wins[fid]
         inside = geometry_mask([mapping(geoms[fid])], out_shape=b["red"].shape, transform=tr, invert=True)
         fmask = b.pop("fmask")
         nodata = np.zeros(fmask.shape, bool)
@@ -335,6 +338,16 @@ def read_field_context(links, fields_lonlat, half_size_m=500):
         out[fid] = {**refl, "bad": bad, "inside": inside, "poly_px": poly_px,
                     "bad_fraction": float(bad[inside].mean()) if inside.any() else 1.0,
                     "bad_fraction_all": float(bad.mean())}
+    return out
+
+
+def _padded(src, win, inner, fill):
+    """Read `inner` (the part of `win` inside the tile) and place it in a `win`-sized array."""
+    out = np.full((int(win.height), int(win.width)), fill, dtype=src.dtypes[0])
+    if inner.width > 0 and inner.height > 0:
+        data = src.read(1, window=inner)
+        r0, c0 = int(inner.row_off - win.row_off), int(inner.col_off - win.col_off)
+        out[r0:r0 + data.shape[0], c0:c0 + data.shape[1]] = data
     return out
 
 
