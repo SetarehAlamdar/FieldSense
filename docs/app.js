@@ -281,14 +281,16 @@ async function renderSpace() {
   const hasWide = meta.views && meta.views.length;
   if (!hasPlots && !hasWide) return;
   const draw = (mode) => {
-    if (hasPlots) {
-      const head = el("tr", {}, el("th", {}, ""), ...meta.plots.dates.map((d) => el("th", {}, el("strong", {}, d.label), el("br"), fmtDate(d.date))));
-      const body = meta.plots.rows.map((r) => el("tr", { class: r.design },
-        el("th", { class: "plot-label" }, `Plot ${r.plot}`, el("br"), el("span", { class: `design ${r.design}` }, r.design)),
+    const grid = (table, tbl) => {
+      const head = el("tr", {}, el("th", {}, ""), ...table.dates.map((d) => el("th", {}, el("strong", {}, d.label), el("br"), fmtDate(d.date))));
+      const body = table.rows.map((r) => el("tr", { class: r.design },
+        el("th", { class: "plot-label" }, r.name || `Plot ${r.plot}`, el("br"), el("span", { class: `design ${r.design}` }, r.design)),
         ...r.tiles.map((t, i) => el("td", {}, el("img", { src: asset(t[mode]),
-          alt: `Plot ${r.plot} (${r.design}), ${meta.plots.dates[i].label}, ${mode === "true" ? "true colour" : "greenness"}` })))));
-      $("plotgrid").replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
-    }
+          alt: `${r.name || "Plot " + r.plot} (${r.design}), ${table.dates[i].label}, ${mode === "true" ? "true colour" : "greenness"}` })))));
+      tbl.replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+    };
+    if (hasPlots) grid(meta.plots, $("plotgrid"));
+    if (meta.farms && meta.farms.rows && meta.farms.rows.length) { grid(meta.farms, $("farmgrid")); $("farmgrid-wrap").hidden = false; }
     if (hasWide) {
       $("space-grid").replaceChildren(...meta.views.map((v) => el("figure", { class: "space-tile" },
         el("img", { src: asset(v[mode]), alt: `${v.label}, ${mode === "true" ? "true colour" : "greenness"}` }),
@@ -343,9 +345,16 @@ async function main() {
       evidence = Object.fromEntries(ev.evidence.map((e) => [e.id, e]));
     } catch (e) { evidence = {}; }
     const tabs = $("plot-tabs");
+    let lastGroup = null;
     const buttons = index.fields.map((f) => {
+      const group = f.group || "Elora trial";
+      if (group !== lastGroup && index.fields.some((x) => (x.group || "Elora trial") !== group)) {
+        tabs.append(el("span", { class: "tab-group" }, group));
+        lastGroup = group;
+      }
       const b = el("button", { type: "button", "data-file": f.file }, f.name.replace("Elora rotation ", "").replace(/^plot/, "Plot"),
         el("small", {}, f.rotation_design ? ` · ${f.rotation_design}` : ""));
+      b.classList.add(f.rotation_design === "diverse" ? "is-diverse" : "is-simple");
       b.onclick = () => loadField(f, buttons);
       tabs.append(b);
       return b;

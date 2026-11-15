@@ -104,6 +104,8 @@ details.more.big[open] > summary { margin-bottom: 12px; }
   padding: 8px 14px; border-radius: 999px; cursor: pointer; }
 .plots button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .plots button small { opacity: .75; font-weight: 400; }
+.tab-group { font-size: .74rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 2px 0 8px; align-self: center; }
+.tab-group:first-child { margin-left: 0; }
 
 main section { padding: 32px 0 4px; }
 .section-lede { color: var(--muted); max-width: 52em; margin: 0 0 16px; }

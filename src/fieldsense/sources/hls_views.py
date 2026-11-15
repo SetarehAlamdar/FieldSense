@@ -186,9 +186,10 @@ def _with_alpha(rgb, inside):
     return np.dstack([rgb, alpha])
 
 
-def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24):
+def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="plots", prefix="plot", names=None):
     """For the dates in `found` (from find_clear_views), save each plot's true-colour and
-    greenness picture and add a "plots" table (rows = plots, columns = dates) to space.json."""
+    greenness picture and add a table (rows = fields, columns = dates) to space.json under `key`
+    ("plots" for the trial plots, "farms" for nearby farm fields)."""
     from PIL import Image
     designs = designs or {}
     rows = {pid: [] for pid in sorted(plots_lonlat)}
@@ -200,16 +201,18 @@ def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24):
             for kind, make in (("true", true_colour), ("green", greenness)):
                 img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
                 img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
-                tile[kind] = f"plot{pid}_{i}_{kind}.png"
+                tile[kind] = f"{prefix}{pid}_{i}_{kind}.png"
                 img.save(os.path.join(out_dir, tile[kind]))
             tile["clear_share"] = round(1 - v["bad_fraction"], 3)
             rows[pid].append(tile)
     path = os.path.join(out_dir, "space.json")
     meta = json.load(open(path)) if os.path.exists(path) else {"views": []}
-    meta["plots"] = {
+    names = names or {}
+    meta[key] = {
         "dates": [{"label": f["label"], "date": f["date"]} for f in found],
-        "rows": [{"plot": int(pid), "design": designs.get(pid, ""), "tiles": tiles} for pid, tiles in rows.items()],
-        "note": "Only each plot's own 30 m pixels are shown (about 7 x 7 per plot); nothing outside the plot.",
+        "rows": [{"plot": int(pid), "name": names.get(pid, f"Plot {pid}"), "design": designs.get(pid, ""), "tiles": tiles}
+                 for pid, tiles in rows.items()],
+        "note": "Only each field's own 30 m pixels are shown; nothing outside the field.",
     }
     with open(path, "w") as fh:
         json.dump(meta, fh, indent=1)
