@@ -106,25 +106,6 @@
     </div>
   </section>
 
-  <section class="band watch" id="watch-section" hidden>
-    <div class="wrap">
-      <p class="kicker">See it happen</p>
-      <h2 class="title">Watch a year</h2>
-      <p class="section-lede" id="watch-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
-      <div class="watch-controls">
-        <label>Fields <select id="watch-pair"></select></label>
-        <label>Year <select id="watch-year"></select></label>
-        <button type="button" id="watch-play">▶ Play</button>
-        <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="green" aria-pressed="true">Greenness</button><button type="button" data-mode="true" aria-pressed="false">True colour</button></span>
-        <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
-      </div>
-      <div class="watch-when"><span class="watch-date" id="watch-date"></span><span class="storm-tag" id="watch-storm" hidden>Spring storm season</span></div>
-      <p class="watch-caption" id="watch-caption"></p>
-      <p class="watch-legend"><span class="sw bare"></span> bare soil &nbsp; <span class="sw green"></span> growing plants</p>
-      <div class="watch-grid" id="watch-grid"></div>
-    </div>
-  </section>
-
   <section class="band space" id="space-section" hidden>
     <div class="wrap">
       <p class="kicker">Seen from space</p>
@@ -155,6 +136,26 @@
       </details>
     </div>
   </section>
+
+  <section class="band watch" id="watch-section" hidden>
+    <div class="wrap">
+      <p class="kicker">See it happen</p>
+      <h2 class="title">Watch a year</h2>
+      <p class="section-lede" id="watch-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
+      <div class="watch-controls">
+        <label>Fields <select id="watch-pair"></select></label>
+        <label>Year <select id="watch-year"></select></label>
+        <button type="button" id="watch-play">▶ Play</button>
+        <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="green" aria-pressed="true">Greenness</button><button type="button" data-mode="true" aria-pressed="false">True colour</button></span>
+        <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
+      </div>
+      <div class="watch-when"><span class="watch-date" id="watch-date"></span><span class="storm-tag" id="watch-storm" hidden>Spring storm season</span></div>
+      <p class="watch-caption" id="watch-caption"></p>
+      <p class="watch-legend"><span class="sw bare"></span> bare soil &nbsp; <span class="sw green"></span> growing plants</p>
+      <div class="watch-grid" id="watch-grid"></div>
+    </div>
+  </section>
+
 
   <section class="stats-band" aria-label="FieldSense in numbers">
     <canvas class="hero-fields" id="stats-fields" aria-hidden="true"></canvas>
