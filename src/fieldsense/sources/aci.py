@@ -79,7 +79,8 @@ def rotation_group(seq):
     return None
 
 
-def find_fields(stack, years, epsg, box, recent=5, min_ha=20, purity=0.7, exclude=None, max_per_group=4):
+def find_fields(stack, years, epsg, box, recent=5, min_ha=20, purity=0.7, exclude=None, max_per_group=4,
+                grouper=None, names=None):
     """Find farm fields in a stack of yearly crop maps.
 
     stack: array (years, H, W) of ACI codes. A field = connected pixels with the same
@@ -88,6 +89,8 @@ def find_fields(stack, years, epsg, box, recent=5, min_ha=20, purity=0.7, exclud
     and `purity` is the share of pixels that agree. Fields need >= min_ha hectares, a clean
     record (purity >= `purity` in at least 80% of years) and a simple or diverse rotation.
     exclude: (lon, lat, radius_m) to skip, e.g. the research station itself.
+    grouper: function(codes) -> "simple" | "diverse" | None (default: the Ontario rule above;
+    `fieldsense.canada.rotation_group` works for all of Canada). names: {code: crop name}.
     Returns a list of dicts sorted by area, at most `max_per_group` per rotation group.
     """
     from pyproj import Transformer
@@ -125,7 +128,7 @@ def find_fields(stack, years, epsg, box, recent=5, min_ha=20, purity=0.7, exclud
                 pur.append(float(cnt.max() / cnt.sum()))
             if np.mean(np.array(pur) >= purity) < 0.8:
                 continue
-            group = rotation_group(seq)
+            group = (grouper or rotation_group)(seq)
             if not group:
                 continue
             polys = [shape(g) for g, v in shapes(comp.astype("uint8"), mask=comp, transform=tr) if v == 1]
@@ -134,7 +137,8 @@ def find_fields(stack, years, epsg, box, recent=5, min_ha=20, purity=0.7, exclud
             if exclude and ((c.x - ex_x) ** 2 + (c.y - ex_y) ** 2) ** 0.5 < exclude[2]:
                 continue
             found.append({"group": group, "area_ha": round(float(comp.sum() * PIXEL_M ** 2 / 10_000), 1),
-                          "crops": {int(y): CROPS.get(s, f"other ({s})") for y, s in zip(years, seq)},
+                          "crops": {int(y): (names or CROPS).get(s, f"other ({s})") for y, s in zip(years, seq)},
+                          "codes": {int(y): int(s) for y, s in zip(years, seq)},
                           "purity": {int(y): round(p, 2) for y, p in zip(years, pur)},
                           "lonlat": [list(to_ll(x, y)) for x, y in poly.exterior.coords]})
     out = []
