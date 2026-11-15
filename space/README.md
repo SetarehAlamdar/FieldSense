@@ -9,7 +9,7 @@ python_version: "3.10"
 app_file: app.py
 pinned: false
 license: apache-2.0
-short_description: Your field's history from NASA satellites and a rotation choice
+short_description: Field history from NASA satellites + rotation choice
 ---
 
 # FieldSense: your field, anywhere in Canada
