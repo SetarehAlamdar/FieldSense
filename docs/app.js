@@ -686,6 +686,29 @@ function climateBox(c) {
       ". Thresholds and rotation options for each province's own crops are the next step."));
 }
 
+// "Try your own field": checks the location, names the nearest measured location, and
+// sends the farmer to the My Field notebook (the full analysis needs NASA login and ~15 min).
+function myFieldPanel(regions, select) {
+  const km = (a, b, c, d) => {
+    const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
+    return 2 * 6371 * Math.asin(Math.sqrt(x));
+  };
+  $("mf-form").onsubmit = (e) => {
+    e.preventDefault();
+    const out = $("mf-out");
+    const m = $("mf-loc").value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) { out.textContent = "Please paste two numbers: latitude, longitude (for example 50.45, -104.61)."; return; }
+    const lat = +m[1], lon = +m[2];
+    if (!(lat > 41.5 && lat < 60 && lon > -141 && lon < -52)) { out.textContent = "That point isn't in Canada's farmland (latitude 42–60, longitude −141 to −52)."; return; }
+    const near = regions.map((r) => ({ r, d: km(lat, lon, r.lat, r.lon) })).sort((a, b) => a.d - b.d)[0];
+    out.replaceChildren(`Point ${lat.toFixed(4)}, ${lon.toFixed(4)}. Closest location FieldSense has measured: `,
+      el("button", { type: "button", class: "linkish" }, `${near.r.name} (${near.r.place})`), `, ${Math.round(near.d)} km away. `,
+      "For your own field, open the notebook and paste this location into the first box.");
+    out.querySelector(".linkish").onclick = () => { select(near.r.region); $("region-detail").scrollIntoView({ behavior: "smooth", block: "start" }); };
+    if (navigator.clipboard) navigator.clipboard.writeText(`${lat}, ${lon}`).then(() => out.append(" (Copied to your clipboard.)"), () => {});
+  };
+}
+
 async function renderCanada() {
   let data;
   try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { console.info("No canada.json:", e); return; }
@@ -789,6 +812,7 @@ function drawCanada(data) {
   }
   $("canada-rule").replaceChildren(data.source, " ", badge("measured"), ` · ${data.rule} Intervals resample fields, so few fields give wide intervals.`);
   select((data.regions.find((r) => r.region === "on") || data.regions[0]).region);
+  myFieldPanel(data.regions, select);
   show("canada-section");
 }
 
