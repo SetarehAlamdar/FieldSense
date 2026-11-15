@@ -497,7 +497,12 @@ async function renderWatch(index) {
     yearSel.replaceChildren(...list.map((y) => el("option", { value: String(y) }, String(y))));
     const want = pair.year && list.includes(pair.year) ? pair.year : list.includes(prevYear) ? prevYear : list.includes(2023) ? 2023 : list[list.length - 1];
     yearSel.value = String(want);
-    day = 59; build();
+    day = 59;
+    if (tl && want === tl.year && pair.year) {                 // start where both fields have a clear picture
+      const firsts = tl.fields.filter((f) => f.frames.length).map((f) => dayOf(f.frames[0].date));
+      if (firsts.length) day = Math.min(200, Math.max(59, ...firsts));
+    }
+    build();
   };
   playBtn.onclick = () => {
     if (timer) { stop(); return; }
@@ -772,7 +777,8 @@ function drawCanada(data) {
       el("div", { class: "rd-fields" }, ...r.fields.map((f) => {
         const yrs = Object.keys(f.crops).map(Number).filter((y) => y >= f.barcode.years[0]).sort();
         return el("div", { class: `rd-field ${f.group}` },
-          el("div", { class: "rd-name" }, f.name, el("span", { class: `design ${f.group}` }, f.group)),
+          el("div", { class: "rd-name" }, r.region === "on" ? f.name.replace("Ontario field", "Farm field") : f.name,
+            el("span", { class: `design ${f.group}` }, f.group)),
           el("div", { class: "rd-crops" }, yrs.map((y) => f.crops[y]).join(" → ")),
           miniBarcode(f.barcode),
           el("div", { class: "rd-years" }, el("span", {}, "Jan"), el("span", {}, `${f.barcode.years[0]}–${f.barcode.years[f.barcode.years.length - 1]}, one row per year`), el("span", {}, "Dec")),
