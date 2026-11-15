@@ -596,6 +596,100 @@ function renderGaps(p) {
 }
 
 
+
+// =================================================================== across Canada
+const CLASS_SHORT = { "winter cereal": "W", "spring crop": "Sp", "summer crop": "Su", forage: "F", fallow: "Fa" };
+function miniBarcode(bc, width = 300) {
+  const rows = bc.years.length, rh = 9, c = el("canvas", { width: String(width), height: String(rows * rh), class: "mini-bc",
+    role: "img", "aria-label": `greenness every day, ${bc.years[0]}–${bc.years[rows - 1]}` });
+  const g = c.getContext("2d");
+  bc.values.forEach((row, r) => row.forEach((v, d) => {
+    g.fillStyle = v == null ? "rgba(128,128,128,.18)" : green(v / bc.scale);
+    g.fillRect(Math.floor((d * width) / 365), r * rh, Math.ceil(width / 365) + 1, rh - 1);
+  }));
+  return c;
+}
+
+async function renderCanada() {
+  let data;
+  try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { return; }
+  if (!data || !data.regions || !data.regions.length) return;
+  const P = (v) => (v == null ? "–" : `${Math.round(100 * v)}%`);
+  const pair = (c) => el("span", { class: "sd" }, el("span", { class: "c-simple" }, P(c.simple)), " / ", el("span", { class: "c-diverse" }, P(c.diverse)));
+  const diffTxt = (d) => (d ? `${d.diff > 0 ? "+" : ""}${Math.round(100 * d.diff)} pts (${Math.round(100 * d.lo)} to ${Math.round(100 * d.hi)})` : "too few fields");
+
+  // map: southern Canada as a soft band, provinces as dashed lines, a pin per region
+  const map = $("canada-map");
+  const X = (lon) => 40 + ((lon + 120) / 50) * 920, Y = (lat) => 30 + ((55 - lat) / 13) * 210;
+  map.append(svg("path", { d: "M14 40 C 260 18, 560 26, 986 52 L 986 288 C 760 296, 640 270, 560 262 C 400 250, 200 252, 14 258 Z", class: "cm-land" }));
+  for (const [lon, name] of [[-120, "BC"], [-110, "AB"], [-102, "SK"], [-95.2, "MB"], [-79.5, "ON"], [-64, "QC"]]) {
+    if (name !== "BC" && name !== "QC") map.append(svg("line", { x1: X(lon), y1: 20, x2: X(lon), y2: 275, class: "cm-border" }));
+  }
+  const detail = $("region-detail");
+  const pins = {};
+  const select = (key) => {
+    const r = data.regions.find((x) => x.region === key);
+    Object.entries(pins).forEach(([k, g]) => g.classList.toggle("on", k === key));
+    document.querySelectorAll("#canada-table tbody tr").forEach((tr) => tr.classList.toggle("on", tr.dataset.region === key));
+    const t = r.timing;
+    detail.replaceChildren(
+      el("div", { class: "rd-head" }, el("h3", {}, `${r.name} · ${r.place}`), el("p", { class: "rd-sub" }, `Main crops: ${r.system}. Crop timing read correctly in ${t.agree} of ${t.checked} field-years `, badge(t.evidence === "validated" ? "validated" : "modelled"))),
+      el("div", { class: "rd-fields" }, ...r.fields.map((f) => {
+        const yrs = Object.keys(f.crops).map(Number).filter((y) => y >= f.barcode.years[0]).sort();
+        return el("div", { class: `rd-field ${f.group}` },
+          el("div", { class: "rd-name" }, f.name, el("span", { class: `design ${f.group}` }, f.group)),
+          el("div", { class: "rd-crops" }, yrs.map((y) => f.crops[y]).join(" → ")),
+          miniBarcode(f.barcode),
+          el("div", { class: "rd-years" }, el("span", {}, "Jan"), el("span", {}, `${f.barcode.years[0]}–${f.barcode.years[f.barcode.years.length - 1]}, one row per year`), el("span", {}, "Dec")),
+          el("div", { class: "rd-nums" }, `Bare ${P(f.cover.bare_share_season)} of the season · green outside summer ${P(f.cover.green_share_off_season)}`));
+      })));
+  };
+  for (const r of data.regions) {
+    const g = svg("g", { class: `cm-pin ${r.timing.evidence === "validated" ? "ok" : ""}`, tabindex: "0", role: "button", "aria-label": r.name });
+    const x = X(r.lon), y = Y(r.lat);
+    g.append(svg("circle", { cx: x, cy: y, r: 16, class: "cm-halo" }), svg("circle", { cx: x, cy: y, r: 8, class: "cm-dot" }));
+    const t1 = svg("text", { x, y: y - 26, "text-anchor": "middle", class: "cm-label" }); t1.textContent = r.name;
+    const t2 = svg("text", { x, y: y + 36, "text-anchor": "middle", class: "cm-sub" }); t2.textContent = `${r.n_simple + r.n_diverse} fields`;
+    g.append(t1, t2);
+    g.onclick = () => select(r.region);
+    g.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(r.region); } };
+    pins[r.region] = g;
+    map.append(g);
+  }
+
+  // scorecard
+  const head = el("tr", {}, el("th", {}, "Region"), el("th", {}, "Fields", el("br"), el("small", {}, "simple / diverse")),
+    el("th", {}, "Crop timing", el("br"), el("small", {}, "vs crop map")),
+    el("th", {}, "Bare days in season", el("br"), el("small", {}, "simple / diverse")),
+    el("th", {}, "Bare in spring storms", el("br"), el("small", {}, "simple / diverse")),
+    el("th", {}, "Green outside summer", el("br"), el("small", {}, "simple / diverse")),
+    el("th", {}, "Diverse − simple, bare days", el("br"), el("small", {}, "90% interval")));
+  const body = data.regions.map((r) => {
+    const tr = el("tr", { "data-region": r.region },
+      el("th", {}, r.name),
+      el("td", {}, `${r.n_simple} / ${r.n_diverse}`),
+      el("td", {}, r.timing.checked ? `${Math.round(100 * r.timing.share)}% ` : "–", r.timing.checked ? el("small", {}, `(${r.timing.agree}/${r.timing.checked})`) : ""),
+      el("td", {}, pair(r.cover.bare_share_season)),
+      el("td", {}, pair(r.cover.spring_bare_share)),
+      el("td", {}, pair(r.cover.green_share_off_season)),
+      el("td", {}, diffTxt(r.cover.bare_share_season.diff)));
+    tr.onclick = () => select(r.region);
+    return tr;
+  });
+  $("canada-table").replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+
+  const a = data.all, d = a && a.cover.bare_share_season.diff;
+  if (d) {
+    const fewer = -Math.round(100 * d.diff);
+    $("canada-headline").replaceChildren(
+      el("strong", {}, fewer > 0 ? `Across ${data.regions.length} provinces, diverse rotations leave the soil bare ${fewer} points less of the season` : `Across ${data.regions.length} provinces, no clear difference in bare days`),
+      ` (90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields). Crop timing read correctly in ${a.timing.agree} of ${a.timing.checked} field-years.`);
+  }
+  $("canada-rule").replaceChildren(data.source, " ", badge("measured"), ` · ${data.rule} Intervals resample fields, so few fields give wide intervals.`);
+  select((data.regions.find((r) => r.region === "on") || data.regions[0]).region);
+  show("canada-section");
+}
+
 // =================================================================== landing layer
 // Aerial-looking patchwork of fields, drawn (not a photo), used behind the hero and the numbers band.
 function drawFields(canvas, seed = 7) {
@@ -812,6 +906,7 @@ async function main() {
     renderHighlights(index.highlights);
     renderSpace();
     renderWatch(index);
+    renderCanada();
     renderDevice(index);
     renderStats(index);
     $("loading").remove();
