@@ -47,8 +47,7 @@ def parse_location(text):
 
 
 CMAP = LinearSegmentedColormap.from_list(
-    "g", [(0, "#8c5a2b"), (0.25, "#d9c48c"), (0.5, "#c9dd8a"), (0.75, "#5aa040"), (1, "#1f6b2a")])
-CMAP.set_bad("#e2e4e8")
+    "g", [(0, "#8c5a2b"), (0.25, "#d9c48c"), (0.5, "#c9dd8a"), (0.75, "#5aa040"), (1, "#1f6b2a")]).with_extremes(bad="#e2e4e8")
 
 
 def barcode_figure(rec, crops):
@@ -171,7 +170,8 @@ def run(location):
         yield (f"**Something went wrong:** {type(e).__name__}: {str(e)[:200]}. Please try again in a minute.", *empty)
 
 
-with gr.Blocks(title="FieldSense: your field", theme=gr.themes.Soft(primary_hue="teal")) as demo:
+THEME = gr.themes.Soft(primary_hue="teal")
+with gr.Blocks(title="FieldSense: your field") as demo:
     gr.Markdown("# FieldSense: your field, anywhere in Canada\n"
                 "Paste your field's location from Google Maps (right-click on the field, then click the numbers). "
                 "FieldSense finds the field at that point on Canada's crop map and reads it from NASA satellites. "
@@ -194,4 +194,4 @@ with gr.Blocks(title="FieldSense: your field", theme=gr.themes.Soft(primary_hue=
 demo.queue(default_concurrency_limit=2)
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme=THEME)         # Gradio 6: the theme is a launch() setting
