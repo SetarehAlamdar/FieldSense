@@ -384,7 +384,7 @@ async function renderWatch(index) {
     if (s && d) pairs.unshift({ label: `Nearby farms (satellite pictures): ${s.name} vs ${d.name}`, files: [s.file, d.file], year: tl.year });
   }
   if (!pairs.length) return;
-  let picMode = "true";
+  let picMode = "green";
   const picBox = $("watch-pic");
   picBox.querySelectorAll("button").forEach((b) => (b.onclick = () => {
     picMode = b.dataset.mode;
@@ -410,7 +410,7 @@ async function renderWatch(index) {
       const h = (p.history || []).find((x) => x.year === year);
       const tf = tl && year === tl.year ? tl.fields.find((t) => t.file === p.file) : null;
       const frames = tf ? tf.frames.map((fr) => ({ ...fr, d: dayOf(fr.date) })) : null;
-      const tile = el("div", { class: frames && frames.length ? "w-tile pic" : "w-tile" });
+      const tile = el("div", { class: frames && frames.length ? `w-tile pic${tl.view === "context" ? " ctx" : ""}` : "w-tile" });
       let img = null, shot = null;
       if (frames && frames.length) { img = el("img", { alt: "" }); shot = el("span", { class: "w-shot" }); tile.append(img, shot); }
       const phase = el("div", { class: "w-phase" }), sub = el("div", { class: "w-sub" });
@@ -439,8 +439,32 @@ async function renderWatch(index) {
     $("watch-grid").replaceChildren(...panels.map((x) => x.card));
     paint();
   };
+  const near = (vals, d) => { for (let k = d; k >= Math.max(0, d - 10); k--) if (vals[k] != null) return vals[k]; return null; };
+  const caption = () => {
+    const [s, d] = panels;
+    if (!s || !d) return ["", false];
+    const vs = near(s.vals, day), vd = near(d.vals, day);
+    const storm = day >= 104 && day <= 165;
+    $("watch-storm").hidden = !storm;
+    if (vs == null || vd == null) return ["No clear satellite view of one of the fields around this date.", false];
+    const sBare = vs < 0.3, dBare = vd < 0.3;
+    if (sBare && !dBare) {
+      if (storm) return ["Spring storm season: the simple field's soil is bare, the diverse field is covered.", true];
+      if (day >= 240) return ["After harvest: the simple field stays bare until spring, the diverse field is green again.", true];
+      if (day < 104) return ["Early spring: the diverse field already has living cover, the simple field is bare.", true];
+      return ["The simple field is bare, the diverse field is covered.", true];
+    }
+    if (sBare && dBare) return [storm ? "Spring storm season: both fields are bare right now." : "Both fields are bare.", false];
+    if (!sBare && dBare) return ["The diverse field is between crops now; the simple field is growing.", false];
+    return ["Both fields are growing.", false];
+  };
   const paint = () => {
     $("watch-date").textContent = doyToDate(day + 1);
+    const [cap, diff] = caption();
+    const capEl = $("watch-caption");
+    if (capEl.textContent !== cap) capEl.textContent = cap;
+    capEl.className = diff ? "watch-caption diff" : "watch-caption";
+    const stormNow = day >= 104 && day <= 165;
     for (const x of panels) {
       const v = x.vals[day];
       if (x.img) {
@@ -455,6 +479,7 @@ async function renderWatch(index) {
       x.phase.textContent = ph; x.sub.textContent = sub; x.phase.className = `w-phase ${kind}`;
       const upto = x.vals.slice(59, day + 1);
       x.bare.textContent = String(upto.filter((u) => u != null && u < 0.3).length);
+      x.bare.className = stormNow && x.vals[day] != null && x.vals[day] < 0.3 ? "storm" : "";
       x.greenN.textContent = String(upto.filter((u) => u != null && u >= 0.4).length);
       const y = v == null ? x.H - 4 : x.H - 4 - Math.max(0, Math.min(1, v)) * (x.H - 8);
       x.dot.setAttribute("cx", ((day / 364) * x.W).toFixed(1)); x.dot.setAttribute("cy", y.toFixed(1));
@@ -701,9 +726,10 @@ async function renderDevice(index) {
         vals: bc.values[r].map((v) => (v == null ? null : v / bc.scale)) };
     });
   }
+  const ctx = !!(tl && tl.view === "context");
   const parts = tiles.map((t) => {
     const img = t.frames ? el("img", { alt: "" }) : null, sw = t.frames ? null : el("div", { class: "swatch" }), cap = el("em");
-    box.append(el("div", { class: `dev-tile ${t.design}` }, el("b", {}, t.design), img || sw, cap));
+    box.append(el("div", { class: `dev-tile ${t.design}${ctx ? " ctx" : ""}` }, el("b", {}, t.design), img || sw, cap));
     return { t, img, sw, cap };
   });
   let day = 60, last = {};
@@ -714,7 +740,7 @@ async function renderDevice(index) {
       if (p.img) {
         let fr = p.t.frames[0];
         for (const c of p.t.frames) { if (c.d <= day) fr = c; else break; }
-        const src = fr.true.startsWith("data:") ? fr.true : asset(fr.true);
+        const src = fr.green.startsWith("data:") ? fr.green : asset(fr.green);
         if (last[p.t.name] !== src) { p.img.src = src; last[p.t.name] = src; }
         p.cap.textContent = p.t.name;
       } else {

@@ -411,3 +411,18 @@ details.more > summary { color: var(--teal-deep); }
 @media (prefers-reduced-motion: reduce) { .js .reveal { opacity: 1; transform: none; transition: none; } .caret { animation: none; } html { scroll-behavior: auto; } }
 .watch-controls label { max-width: 100%; }
 .watch-controls select { max-width: min(560px, calc(100vw - 100px)); text-overflow: ellipsis; }
+
+/* Watch a year: fields in their surroundings, captions, storm season */
+.w-tile.pic.ctx { height: auto; aspect-ratio: 1; }
+.w-tile.pic.ctx img, .dev-tile.ctx img { object-fit: cover; padding: 0; image-rendering: auto; }
+.dev-tile.ctx img { border-radius: 12px; }
+.watch-when { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 14px 0 4px; }
+.watch-when .watch-date { margin: 0; }
+.storm-tag { background: var(--risk); color: #fff; font-size: .78rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; letter-spacing: .02em; }
+.watch-caption { font-family: var(--display); font-size: 1.12rem; font-weight: 600; margin: 4px 0 6px; min-height: 1.5em; color: var(--muted); transition: color .2s; }
+.watch-caption.diff { color: var(--ink); }
+.watch-legend { font-size: .85rem; color: var(--muted); margin: 0 0 12px; }
+.w-count strong.storm { color: var(--risk); }
+.dev-legend { display: flex; gap: 6px; align-items: center; font-size: .72rem; color: #a9c5b6; }
+.dev-legend .sw { margin-left: 6px; }
+.w-tile.pic.ctx { width: 100%; max-width: 380px; margin: 10px auto; }

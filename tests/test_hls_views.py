@@ -97,3 +97,31 @@ def test_field_timeline_keeps_only_clear_pictures(tmp_path):
     assert [f["date"] for f in frames] == ["2023-05-10", "2023-06-01"]      # the cloudy date is dropped
     assert frames[0]["green"].startswith("data:image/png;base64,")         # pictures packed in the JSON
     assert json.loads((tmp_path / "timeline.json").read_text())["year"] == 2023
+
+
+
+def test_context_view_shows_the_field_in_its_surroundings(tmp_path):
+    from pyproj import Transformer
+    to_ll = Transformer.from_crs("EPSG:32617", "EPSG:4326", always_xy=True).transform
+    square = lambda x, y, s: [to_ll(x, y), to_ll(x + s, y), to_ll(x + s, y + s), to_ll(x, y + s), to_ll(x, y)]
+    fields = {1: square(X0 - 150, Y0 - 150, 300)}
+    links = _write_granule(tmp_path, red=400, nir=3000, fmask=0)
+    v = hls_views.read_field_context(links, fields, half_size_m=500)[1]
+    assert v["red"].shape[0] in (33, 34) and 50 < v["inside"].sum() < 150     # 1 km square, 300 m field
+    img = hls_views.render_context(hls_views.greenness(v), v["poly_px"], size=200)
+    assert img.size == (200, 200)
+    px = np.asarray(img).astype(int)
+    assert px[100, 100].sum() > px[5, 5].sum()                                 # field bright, surroundings dimmed
+    grans = [{"date": "2023-05-10", "links": links}]
+    meta = hls_views.add_field_timeline(grans, fields, tmp_path, 2023, context_m=1000, size=200)
+    assert meta["view"] == "context" and meta["fields"][0]["frames"][0]["green"].startswith("data:image/jpeg")
+
+
+def test_showcase_picks_the_biggest_measured_difference():
+    def prof(rows):
+        return {"cover": {"per_year": [dict(year=y, observed_days=220, bare_days=b, green_share_off_season=g) for y, b, g in rows]}}
+    profiles = {1: prof([(2020, 140, 0.0), (2023, 120, 0.05)]),
+                2: prof([(2020, 60, 0.6), (2023, 100, 0.1)]),
+                3: prof([(2020, 90, 0.3), (2023, 20, 0.7)])}
+    pick = hls_views.pick_showcase(profiles, {1: "simple", 2: "diverse", 3: "diverse"})
+    assert (pick["simple"], pick["diverse"], pick["year"]) == (1, 3, 2023)     # 100 fewer bare days + 65 points
