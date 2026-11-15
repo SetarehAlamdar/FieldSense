@@ -46,6 +46,7 @@
           <div class="dev-bar"><span>FieldSense · Watch a year</span><span id="dev-date"></span></div>
           <div class="dev-tiles" id="dev-tiles"></div>
           <div class="dev-track"><span id="dev-progress"></span></div>
+          <div class="dev-legend"><span class="sw bare"></span> bare soil <span class="sw green"></span> growing</div>
         </div>
       </figure>
     </div>
@@ -111,10 +112,12 @@
         <label>Fields <select id="watch-pair"></select></label>
         <label>Year <select id="watch-year"></select></label>
         <button type="button" id="watch-play">▶ Play</button>
-        <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="true" aria-pressed="true">True colour</button><button type="button" data-mode="green" aria-pressed="false">Greenness</button></span>
+        <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="green" aria-pressed="true">Greenness</button><button type="button" data-mode="true" aria-pressed="false">True colour</button></span>
         <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
       </div>
-      <div class="watch-date" id="watch-date"></div>
+      <div class="watch-when"><span class="watch-date" id="watch-date"></span><span class="storm-tag" id="watch-storm" hidden>Spring storm season</span></div>
+      <p class="watch-caption" id="watch-caption"></p>
+      <p class="watch-legend"><span class="sw bare"></span> bare soil &nbsp; <span class="sw green"></span> growing plants</p>
       <div class="watch-grid" id="watch-grid"></div>
     </div>
   </section>

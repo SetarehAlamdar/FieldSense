@@ -240,37 +240,50 @@ def search_granules(bbox, start, end, max_cloud=80):
 
 
 def add_field_timeline(granules, fields_lonlat, out_dir, year, designs=None, names=None, files=None,
-                       max_bad=0.1, scale=6):
+                       max_bad=0.1, scale=6, context_m=None, max_bad_context=0.35, size=360):
     """Every clear picture of each field through one year, for the page's "Watch a year" animation.
 
     granules: from `search_granules` (one year). A picture is kept when at most `max_bad`
-    of the field's pixels are cloudy or missing. Saves timeline.json, with the pictures packed inside it. Only pixels inside each field are drawn;
-    everything else is transparent.
+    of the field's pixels are cloudy or missing. Saves timeline.json, with the pictures packed inside it.
+
+    context_m=None: only the field's own pixels (everything else transparent).
+    context_m=1000: a 1 km square around the field, smoothly enlarged to `size` pixels, with the
+    field bright and its surroundings dimmed (and at most `max_bad_context` cloud in the square).
     """
     import base64
     import io
     from PIL import Image
     designs, names, files = designs or {}, names or {}, files or {}
     frames = {fid: [] for fid in fields_lonlat}
-    for g in granules:
+    for n, g in enumerate(granules, start=1):
         try:
-            views = read_plot_views(g["links"], fields_lonlat)
+            views = (read_field_context(g["links"], fields_lonlat, context_m / 2) if context_m
+                     else read_plot_views(g["links"], fields_lonlat))
         except Exception as err:
             print(f"  skipped {g['date']}: {err}")
             continue
+        if n % 10 == 0:
+            print(f"  read {n} of {len(granules)} passes")
         for fid, v in views.items():
             if v["bad_fraction"] > max_bad or (frames[fid] and frames[fid][-1]["date"] == g["date"]):
                 continue
+            if context_m and v["bad_fraction_all"] > max_bad_context:
+                continue
             entry = {"date": g["date"], "clear": round(1 - v["bad_fraction"], 3)}
             for kind, make in (("true", true_colour), ("green", greenness)):
-                img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
-                img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
                 buf = io.BytesIO()
-                img.save(buf, format="PNG", optimize=True)
+                if context_m:
+                    render_context(make(v), v["poly_px"], size=size).save(buf, format="JPEG", quality=82, optimize=True)
+                    mime = "image/jpeg"
+                else:
+                    img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
+                    img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+                    img.save(buf, format="PNG", optimize=True)
+                    mime = "image/png"
                 # packed inside timeline.json: one file instead of hundreds (GitHub's web upload takes 100 at a time)
-                entry[kind] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+                entry[kind] = f"data:{mime};base64," + base64.b64encode(buf.getvalue()).decode()
             frames[fid].append(entry)
-    meta = {"year": int(year), "fields": [
+    meta = {"year": int(year), "view": "context" if context_m else "field", "fields": [
         {"id": int(fid), "file": files.get(fid, f"farm_{fid}.json"), "name": names.get(fid, f"Field {fid}"),
          "design": designs.get(fid, ""), "frames": frames[fid]} for fid in fields_lonlat]}
     with open(os.path.join(out_dir, "timeline.json"), "w") as fh:
@@ -278,3 +291,92 @@ def add_field_timeline(granules, fields_lonlat, out_dir, year, designs=None, nam
     for f in meta["fields"]:
         print(f"{f['name']}: {len(f['frames'])} clear pictures in {year}")
     return meta
+
+
+# ------------------------------------------------------------------ a field in its surroundings
+def read_field_context(links, fields_lonlat, half_size_m=500):
+    """A square around each field's centre: {field_id: view}. view["poly_px"] is the field's
+    outline in pixel coordinates (to draw a smooth highlight); "bad_fraction" counts only the
+    field's own pixels, "bad_fraction_all" the whole square."""
+    out = {}
+    with rasterio.Env(**hls.GDAL_OPTS):
+        with hls._open(links["red"]) as src:
+            geoms = hls.plots_in_crs(fields_lonlat, src.crs, inner_buffer_m=0)
+            wins = {}
+            for fid, g in geoms.items():
+                c = g.centroid
+                w = from_bounds(c.x - half_size_m, c.y - half_size_m, c.x + half_size_m, c.y + half_size_m, transform=src.transform)
+                win = Window(int(round(w.col_off)), int(round(w.row_off)), int(round(w.width)), int(round(w.height)))
+                wins[fid] = (win, src.window_transform(win))
+            bands = {fid: {"red": src.read(1, window=win, boundless=True, fill_value=NODATA)} for fid, (win, _) in wins.items()}
+        for key in ("green", "blue", "nir", "fmask"):
+            with hls._open(links[key]) as src:
+                for fid, (win, _) in wins.items():
+                    bands[fid][key] = src.read(1, window=win, boundless=True, fill_value=255 if key == "fmask" else NODATA)
+    for fid, b in bands.items():
+        win, tr = wins[fid]
+        inside = geometry_mask([mapping(geoms[fid])], out_shape=b["red"].shape, transform=tr, invert=True)
+        fmask = b.pop("fmask")
+        nodata = np.zeros(fmask.shape, bool)
+        for v in b.values():
+            nodata |= v <= NODATA
+        bad = nodata | (fmask == 255) | ((fmask & hls.BAD_FMASK_BITS) != 0)
+        refl = {k: np.where(v <= NODATA, np.nan, v * SCALE).astype("float32") for k, v in b.items()}
+        inv = ~tr
+        poly_px = [tuple(inv @ (x, y)) if hasattr(inv, "__matmul__") else inv * (x, y) for x, y in geoms[fid].exterior.coords]
+        out[fid] = {**refl, "bad": bad, "inside": inside, "poly_px": poly_px,
+                    "bad_fraction": float(bad[inside].mean()) if inside.any() else 1.0,
+                    "bad_fraction_all": float(bad.mean())}
+    return out
+
+
+def render_context(rgb, poly_px, size=360, dim=0.5, edge=(255, 255, 255)):
+    """Smoothly enlarge a small satellite square and highlight one field: the field keeps its
+    colours, the surroundings are dimmed and a little greyer, with a soft white edge."""
+    from PIL import Image, ImageDraw, ImageFilter
+    h, w = rgb.shape[:2]
+    img = Image.fromarray(rgb).resize((size, size), Image.BICUBIC)
+    ss = 4                                                   # draw the outline 4x larger, then shrink: smooth edges
+    sx, sy = size * ss / w, size * ss / h
+    pts = [(x * sx, y * sy) for x, y in poly_px]
+    mask = Image.new("L", (size * ss, size * ss), 0)
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    mask = mask.resize((size, size), Image.LANCZOS).filter(ImageFilter.GaussianBlur(0.6))
+    line = Image.new("L", (size * ss, size * ss), 0)
+    ImageDraw.Draw(line).line(pts + pts[:1], fill=230, width=2 * ss, joint="curve")
+    line = line.resize((size, size), Image.LANCZOS)
+    arr = np.asarray(img).astype("float32")
+    grey = arr.mean(axis=2, keepdims=True)
+    outside = (0.6 * arr + 0.4 * grey) * dim
+    m = np.asarray(mask, dtype="float32")[..., None] / 255
+    out = arr * m + outside * (1 - m)
+    a = np.asarray(line, dtype="float32")[..., None] / 255 * 0.85
+    out = out * (1 - a) + np.array(edge, "float32") * a
+    return Image.fromarray(np.clip(out, 0, 255).astype("uint8"))
+
+
+def pick_showcase(profiles, designs, areas=None, min_year=2016, min_observed=150):
+    """Choose the simple field, diverse field and year where the satellite measured the biggest
+    difference in soil cover: fewer bare days and more off-season green on the diverse field.
+
+    profiles: {field_id: profile dict}; designs: {field_id: "simple" | "diverse"};
+    areas: {field_id: hectares} (breaks ties toward bigger fields, which look better).
+    Returns {"simple", "diverse", "year", "bare_days", "offseason_green"} or None.
+    """
+    areas = areas or {}
+    per = {fid: {r["year"]: r for r in p.get("cover", {}).get("per_year", [])} for fid, p in profiles.items()}
+    best = None
+    for d in (f for f in profiles if designs.get(f) == "diverse"):
+        for s in (f for f in profiles if designs.get(f) == "simple"):
+            for y in sorted(set(per[d]) & set(per[s])):
+                rd, rs = per[d][y], per[s][y]
+                if y < min_year or min(rd.get("observed_days") or 0, rs.get("observed_days") or 0) < min_observed:
+                    continue
+                share_d, share_s = rd.get("green_share_off_season") or 0, rs.get("green_share_off_season") or 0
+                score = (rs["bare_days"] - rd["bare_days"]) + 100 * (share_d - share_s)
+                key = (round(score, 3), areas.get(s, 0) + areas.get(d, 0), y)
+                if best is None or key > best[0]:
+                    best = (key, {"simple": s, "diverse": d, "year": int(y),
+                                  "bare_days": {"simple": rs["bare_days"], "diverse": rd["bare_days"]},
+                                  "offseason_green": {"simple": round(share_s, 2), "diverse": round(share_d, 2)}})
+    return best[1] if best else None
