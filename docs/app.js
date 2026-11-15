@@ -529,10 +529,45 @@ function renderPassport() {
   show("passport-section");
 }
 
+// Key moments for soil, from the "Watch a year" pictures (timeline.json): the clear picture
+// closest to each date, for the simple and the diverse field, labelled from measured greenness.
+const MOMENTS = [["Spring storm season", 130], ["Early summer", 172], ["Late summer", 227], ["After harvest", 295]];
+async function loadMoments() {
+  let tl;
+  try { tl = await (await fetch(DATA + "timeline.json")).json(); } catch (e) { return null; }
+  if (!tl || tl.view !== "context") return null;
+  const pair = ["simple", "diverse"].map((d) => tl.fields.find((f) => f.design === d && f.frames.length));
+  if (pair.some((f) => !f)) return null;
+  const doy = (iso) => { const t = new Date(iso + "T00:00:00Z"); return Math.round((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5) + 1; };
+  const rows = [];
+  for (const f of pair) {
+    let vals = null;
+    try {
+      const bc = (await getProfile(f.file)).barcode, r = bc.years.indexOf(tl.year);
+      if (r >= 0) vals = bc.values[r].map((v) => (v == null ? null : v / bc.scale));
+    } catch (e) { vals = null; }
+    const cells = MOMENTS.map(([, target]) => {
+      let best = null;
+      for (const fr of f.frames) {
+        const d = doy(fr.date);
+        if (Math.abs(d - target) <= 25 && (!best || Math.abs(d - target) < Math.abs(best.d - target))) best = { ...fr, d };
+      }
+      if (!best) return null;
+      let v = null;
+      if (vals) for (let k = best.d - 1; k >= Math.max(0, best.d - 8) && v == null; k--) v = vals[k];
+      best.state = v == null ? "" : v < 0.3 ? "bare soil" : v < 0.5 ? "partly green" : "growing";
+      return best;
+    });
+    rows.push({ name: f.name, design: f.design, cells });
+  }
+  return { year: tl.year, rows };
+}
+
 async function renderSpace() {
   let meta;
   try { meta = await (await fetch(DATA + "space.json")).json(); } catch (e) { return; }
   if (!meta) return;
+  const moments = await loadMoments();
   const fmtDate = (d) => new Date(d + "T12:00:00Z").toLocaleDateString("en-CA", { month: "short", day: "numeric", timeZone: "UTC" });
   const hasPlots = meta.plots && meta.plots.rows && meta.plots.rows.length;
   const hasWide = meta.views && meta.views.length;
@@ -547,6 +582,16 @@ async function renderSpace() {
       tbl.replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
       tbl.classList.toggle("ctx", table.view === "context");
     };
+    if (moments) {
+      const head = el("tr", {}, el("th", {}, ""), ...MOMENTS.map(([label]) => el("th", {}, el("strong", {}, label))));
+      const body = moments.rows.map((r) => el("tr", { class: r.design },
+        el("th", { class: "plot-label" }, r.name, el("br"), el("span", { class: `design ${r.design}` }, r.design)),
+        ...r.cells.map((c) => el("td", {}, c
+          ? el("figure", { class: "moment" }, el("img", { src: c[mode].startsWith("data:") ? c[mode] : asset(c[mode]), alt: `${r.name} (${r.design}), ${doyToDate(c.d)}` }),
+              el("figcaption", {}, el("span", { class: `state ${c.state.replace(" ", "-")}` }, c.state), ` ${doyToDate(c.d)}`))
+          : el("span", { class: "no-view" }, "no clear view")))));
+      $("momentgrid").replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+    }
     if (hasPlots) grid(meta.plots, $("plotgrid"));
     if (meta.farms && meta.farms.rows && meta.farms.rows.length) { grid(meta.farms, $("farmgrid")); $("farmgrid-wrap").hidden = false; }
     if (hasWide) {
@@ -557,13 +602,24 @@ async function renderSpace() {
     document.querySelectorAll(".space-toggle button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.mode === mode ? "true" : "false"));
   };
   document.querySelectorAll(".space-toggle button").forEach((b) => { b.onclick = () => draw(b.dataset.mode); });
-  draw("true");
+  if (moments) {                                       // the farm grid becomes a fold-out under the key moments
+    $("farms-slot").append($("farmgrid-wrap"));
+    $("moments-wrap").hidden = false;
+    $("farms-details").hidden = !(meta.farms && meta.farms.rows && meta.farms.rows.length);
+    if (meta.farms) $("farms-summary").textContent = `More farm fields, on four fixed dates in ${meta.farms.dates[0].date.slice(0, 4)}`;
+  }
+  draw(moments ? "green" : "true");
   const dates = hasPlots ? meta.plots.dates : meta.views;
   const year = dates[0].date.slice(0, 4);
   const hasFarms = !!(meta.farms && meta.farms.rows && meta.farms.rows.length);
-  if (hasFarms) {
+  if (moments) {
+    const [sr, dr] = moments.rows;
+    $("space-title").textContent = "Simple vs diverse, seen from space";
+    $("space-lede").textContent = `${sr.name} (simple) and ${dr.name} (diverse) in ${moments.year}, the year with the biggest measured difference in soil cover. Four moments that matter for the soil, each the clearest picture near that date. Brown means bare soil, green means growing plants.`;
+    $("plots-summary").textContent = "The Elora trial plots (small: each plot is only a few 30 m pixels)";
+  } else if (hasFarms) {
     $("space-title").textContent = "Farm fields, seen from space";
-    $("space-lede").textContent = `Simple and diverse farm fields near Elora on clear days in ${meta.farms.dates[0].date.slice(0, 4)}, each in its surroundings. Watch the fall: simple fields are bare, diverse fields are still green. Grey means cloud.`;
+    $("space-lede").textContent = `Simple and diverse farm fields near Elora on four clear days in ${meta.farms.dates[0].date.slice(0, 4)}, each in its surroundings. One year shows one crop: the rotation difference shows over several years (see each field's barcode below). Grey means cloud.`;
     $("plots-summary").textContent = "The Elora trial plots (small: each plot is only a few 30 m pixels)";
   } else {
     $("space-lede").textContent = hasPlots

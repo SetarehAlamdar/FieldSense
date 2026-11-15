@@ -195,7 +195,7 @@ def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="pl
     designs = designs or {}
     rows = {pid: [] for pid in sorted(plots_lonlat)}
     for i, f in enumerate(found, start=1):
-        views = (read_field_context(f["links"], plots_lonlat, context_m / 2) if context_m
+        views = (read_field_context(f["links"], plots_lonlat, None if context_m == "auto" else context_m / 2) if context_m
                  else read_plot_views(f["links"], plots_lonlat))
         for pid in rows:
             v = views[pid]
@@ -265,7 +265,7 @@ def add_field_timeline(granules, fields_lonlat, out_dir, year, designs=None, nam
     frames = {fid: [] for fid in fields_lonlat}
     for n, g in enumerate(granules, start=1):
         try:
-            views = (read_field_context(g["links"], fields_lonlat, context_m / 2) if context_m
+            views = (read_field_context(g["links"], fields_lonlat, None if context_m == "auto" else context_m / 2) if context_m
                      else read_plot_views(g["links"], fields_lonlat))
         except Exception as err:
             print(f"  skipped {g['date']}: {err}")
@@ -303,7 +303,8 @@ def add_field_timeline(granules, fields_lonlat, out_dir, year, designs=None, nam
 
 # ------------------------------------------------------------------ a field in its surroundings
 def read_field_context(links, fields_lonlat, half_size_m=500):
-    """A square around each field's centre: {field_id: view}. view["poly_px"] is the field's
+    """A square around each field's centre: {field_id: view}. half_size_m=None sizes each square
+    to its field (at least 1 km wide, with a margin around large fields). view["poly_px"] is the field's
     outline in pixel coordinates (to draw a smooth highlight); "bad_fraction" counts only the
     field's own pixels, "bad_fraction_all" the whole square."""
     out = {}
@@ -314,7 +315,9 @@ def read_field_context(links, fields_lonlat, half_size_m=500):
             full = Window(0, 0, src.width, src.height)
             for fid, g in geoms.items():
                 c = g.centroid
-                w = from_bounds(c.x - half_size_m, c.y - half_size_m, c.x + half_size_m, c.y + half_size_m, transform=src.transform)
+                minx, miny, maxx, maxy = g.bounds
+                h = half_size_m or max(500, 0.65 * max(maxx - minx, maxy - miny))   # None: fit big fields
+                w = from_bounds(c.x - h, c.y - h, c.x + h, c.y + h, transform=src.transform)
                 win = Window(int(round(w.col_off)), int(round(w.row_off)), int(round(w.width)), int(round(w.height)))
                 # read only the part inside the image tile (boundless reads fail on remote files) and pad the rest
                 inner = win.intersection(full)

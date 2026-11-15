@@ -157,9 +157,16 @@
         <button type="button" data-mode="true" aria-pressed="true">True colour</button>
         <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
       </div>
+      <div id="moments-wrap" hidden>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid moments" id="momentgrid"></table></div>
+      </div>
       <div id="farmgrid-wrap" hidden>
         <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
       </div>
+      <details class="more" id="farms-details" hidden>
+        <summary id="farms-summary">More farm fields, on the same four dates</summary>
+        <div id="farms-slot"></div>
+      </details>
       <details class="more" id="plots-details">
         <summary id="plots-summary">The Elora trial plots</summary>
         <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
