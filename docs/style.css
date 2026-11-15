@@ -430,3 +430,37 @@ details.more > summary { color: var(--teal-deep); }
 /* Seen from space: farm fields in their surroundings */
 table.plotgrid.ctx td img { max-width: 170px; image-rendering: auto; object-fit: cover; border-radius: 10px; }
 #plots-details { margin-top: 18px; }
+
+/* Across Canada */
+.canada-map-box { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 8px; margin: 8px 0 18px; }
+#canada-map { width: 100%; height: auto; display: block; }
+.cm-land { fill: var(--accent-soft); stroke: var(--teal); stroke-width: 1.5; opacity: .9; }
+.cm-border { stroke: var(--teal); stroke-dasharray: 4 6; stroke-width: 1; opacity: .5; }
+.cm-pin { cursor: pointer; outline: none; }
+.cm-halo { fill: var(--teal); opacity: .18; transition: opacity .2s, r .2s; }
+.cm-dot { fill: var(--card); stroke: var(--indigo); stroke-width: 3; }
+.cm-pin.ok .cm-dot { fill: var(--teal); stroke: var(--teal-deep); }
+.cm-pin.on .cm-halo, .cm-pin:hover .cm-halo, .cm-pin:focus .cm-halo { opacity: .45; }
+.cm-label { font: 600 22px var(--display); fill: var(--indigo); }
+.cm-sub { font: 500 15px Inter, sans-serif; fill: var(--muted); }
+.canada-headline { font-size: 1.08rem; margin: 0 0 14px; max-width: 60em; }
+.canada-headline strong { color: var(--indigo); font-family: var(--display); }
+table.scorecard { width: 100%; border-collapse: collapse; min-width: 760px; background: var(--card); }
+.scorecard th, .scorecard td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-size: .93rem; }
+.scorecard thead th { font-size: .82rem; color: var(--muted); font-weight: 600; vertical-align: bottom; }
+.scorecard thead small, .scorecard td small { color: var(--muted); font-weight: 400; }
+.scorecard tbody tr { cursor: pointer; }
+.scorecard tbody tr:hover, .scorecard tbody tr.on { background: var(--accent-soft); }
+.scorecard tbody th { color: var(--indigo); font-family: var(--display); }
+.scorecard .sd { font-weight: 600; white-space: nowrap; }
+.region-detail { margin-top: 22px; }
+.rd-head h3 { margin: 0 0 4px; color: var(--indigo); }
+.rd-sub { margin: 0 0 14px; color: var(--muted); }
+.rd-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.rd-field { background: var(--card); border-radius: 14px; padding: 14px 16px; box-shadow: var(--shadow); border-top: 4px solid var(--simple); }
+.rd-field.diverse { border-top-color: var(--diverse); }
+.rd-name { font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rd-crops { font-size: .85rem; color: var(--muted); margin: 4px 0 8px; min-height: 2.4em; }
+.mini-bc { width: 100%; height: auto; display: block; border-radius: 4px; image-rendering: pixelated; }
+.rd-years { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 3px; }
+.rd-nums { font-size: .86rem; margin-top: 8px; }
