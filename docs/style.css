@@ -502,3 +502,7 @@ table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px
 @media (max-width: 760px) { .myfield { grid-template-columns: 1fr; } }
 .myfield > * { min-width: 0; } .mf-go { white-space: normal; text-align: center; } .mf-out { overflow-wrap: anywhere; }
 .mf-alt { margin-top: 8px !important; font-size: .85rem; }
+#myfield { scroll-margin-top: 80px; }
+.nav-links { gap: 22px; }
+.nav-links a { white-space: nowrap; }
+@media (max-width: 1180px) { .nav-links a:nth-child(-n+2) { display: none; } }
