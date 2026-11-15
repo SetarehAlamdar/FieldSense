@@ -673,13 +673,28 @@ function drawCanada(data) {
           el("div", { class: "rd-nums" }, `Bare ${P(f.cover.bare_share_season)} of the season · green outside summer ${P(f.cover.green_share_off_season)}`));
       })));
   };
-  for (const r of data.regions) {
+  const placed = [];                                    // pins already drawn, to keep labels apart
+  for (const r of [...data.regions].sort((a, b) => !!a.custom - !!b.custom)) {   // regions first, own places last
+    const x0 = X(r.lon), y0 = Y(r.lat);
+    const near = placed.find((p) => Math.abs(p.x - x0) < 100 && Math.abs(p.y - y0) < 60);
+    placed.push({ x: x0, y: y0, key: r.region });
     const g = svg("g", { class: `cm-pin ${r.timing.evidence === "validated" ? "ok" : ""}${r.custom ? " custom" : ""}`, tabindex: "0", role: "button", "aria-label": r.name });
     const x = X(r.lon), y = Y(r.lat);
     g.append(svg("circle", { cx: x, cy: y, r: 16, class: "cm-halo" }), svg("circle", { cx: x, cy: y, r: 8, class: "cm-dot" }));
-    const t1 = svg("text", { x, y: y - 26, "text-anchor": "middle", class: "cm-label" }); t1.textContent = r.name;
-    const t2 = svg("text", { x, y: y + 36, "text-anchor": "middle", class: "cm-sub" }); t2.textContent = `${r.n_simple + r.n_diverse} fields`;
-    g.append(t1, t2);
+    const n = `${r.n_simple + r.n_diverse} fields`;
+    if (near) {
+      // crowded: this pin's name and count go together below it; the neighbour's count moves to its right
+      const t = svg("text", { x, y: y + 40, "text-anchor": "middle", class: "cm-label small" });
+      t.textContent = r.name;
+      const t2 = svg("text", { x, y: y + 58, "text-anchor": "middle", class: "cm-sub" }); t2.textContent = n;
+      g.append(t, t2);
+      const other = pins[near.key] && pins[near.key].querySelector(".cm-sub");
+      if (other) { other.setAttribute("x", near.x + 22); other.setAttribute("y", near.y + 5); other.setAttribute("text-anchor", "start"); }
+    } else {
+      const t1 = svg("text", { x, y: y - 26, "text-anchor": "middle", class: "cm-label" }); t1.textContent = r.name;
+      const t2 = svg("text", { x, y: y + 36, "text-anchor": "middle", class: "cm-sub" }); t2.textContent = n;
+      g.append(t1, t2);
+    }
     g.onclick = () => select(r.region);
     g.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(r.region); } };
     pins[r.region] = g;
