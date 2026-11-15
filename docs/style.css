@@ -486,3 +486,18 @@ table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px
 .state.bare-soil { color: var(--simple); } .state.growing { color: var(--diverse); } .state.partly-green { color: var(--modelled); }
 .no-view { display: inline-block; padding: 40px 0; color: var(--muted); font-size: .85rem; }
 #farms-details { margin-top: 18px; }
+
+/* Try your own field */
+.myfield { margin-top: 28px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 22px 24px;
+  display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: start; border-top: 4px solid var(--teal); }
+.myfield h3 { margin: 0 0 6px; color: var(--indigo); font-size: 1.3rem; }
+.mf-text p { margin: 0; color: var(--muted); }
+.mf-form label { font-weight: 600; font-size: .9rem; display: block; margin-bottom: 6px; }
+.mf-row { display: flex; gap: 8px; }
+.mf-row input { flex: 1; min-width: 0; padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; }
+.mf-row button { border: 0; cursor: pointer; padding: 10px 20px; }
+.mf-out { font-size: .9rem; margin: 10px 0; min-height: 1.4em; }
+.linkish { background: none; border: 0; padding: 0; color: var(--teal-deep); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.mf-go { margin-top: 4px; }
+@media (max-width: 760px) { .myfield { grid-template-columns: 1fr; } }
+.myfield > * { min-width: 0; } .mf-go { white-space: normal; text-align: center; } .mf-out { overflow-wrap: anywhere; }

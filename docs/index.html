@@ -133,6 +133,21 @@
       <div class="table-scroll"><table class="scorecard" id="canada-table"></table></div>
       <p class="evidence-line" id="canada-rule"></p>
       <div class="region-detail" id="region-detail"></div>
+      <div class="myfield" id="myfield">
+        <div class="mf-text">
+          <h3>Try your own field</h3>
+          <p>Paste your field's location from Google Maps (right-click on the field → click the numbers). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. It runs in a free Google Colab notebook in about 15–20 minutes; you need a free <a href="https://urs.earthdata.nasa.gov/users/new">NASA Earthdata account</a>. Your field stays private.</p>
+        </div>
+        <form class="mf-form" id="mf-form">
+          <label for="mf-loc">Latitude, longitude</label>
+          <div class="mf-row">
+            <input id="mf-loc" type="text" inputmode="decimal" placeholder="e.g. 50.45, -104.61" autocomplete="off">
+            <button type="submit" class="pill pill-teal">Check</button>
+          </div>
+          <p class="mf-out" id="mf-out" aria-live="polite"></p>
+          <a class="pill pill-indigo mf-go" id="mf-go" href="https://colab.research.google.com/github/SetarehAlamdar/FieldSense/blob/main/notebooks/FieldSense_My_Field.ipynb" target="_blank" rel="noopener">Open my field in Colab →</a>
+        </form>
+      </div>
     </div>
   </section>
 
