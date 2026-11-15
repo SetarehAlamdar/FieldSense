@@ -136,7 +136,8 @@
       <div class="myfield" id="myfield">
         <div class="mf-text">
           <h3>Try your own field</h3>
-          <p>Paste your field's location from Google Maps (right-click on the field → click the numbers). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. It runs in a free Google Colab notebook in about 15–20 minutes; you need a free <a href="https://urs.earthdata.nasa.gov/users/new">NASA Earthdata account</a>. Your field stays private.</p>
+          <p>Paste your field's location from Google Maps (right-click on the field → click the numbers). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. It runs in our web app in about 5–10 minutes, with no login. Nothing is stored or published.</p>
+          <p class="mf-alt">Prefer to run it yourself? Open the <a href="https://colab.research.google.com/github/SetarehAlamdar/FieldSense/blob/main/notebooks/FieldSense_My_Field.ipynb" target="_blank" rel="noopener">Colab notebook</a> (free <a href="https://urs.earthdata.nasa.gov/users/new">NASA Earthdata account</a> needed).</p>
         </div>
         <form class="mf-form" id="mf-form">
           <label for="mf-loc">Latitude, longitude</label>
@@ -145,7 +146,7 @@
             <button type="submit" class="pill pill-teal">Check</button>
           </div>
           <p class="mf-out" id="mf-out" aria-live="polite"></p>
-          <a class="pill pill-indigo mf-go" id="mf-go" href="https://colab.research.google.com/github/SetarehAlamdar/FieldSense/blob/main/notebooks/FieldSense_My_Field.ipynb" target="_blank" rel="noopener">Open my field in Colab →</a>
+          <a class="pill pill-indigo mf-go" id="mf-go" href="https://huggingface.co/spaces/SetarehAlamdar/fieldsense" target="_blank" rel="noopener">Open the FieldSense app →</a>
         </form>
       </div>
     </div>
