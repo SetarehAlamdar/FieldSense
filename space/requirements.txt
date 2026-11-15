@@ -1,2 +1,1 @@
 fieldsense[hls] @ git+https://github.com/SetarehAlamdar/FieldSense.git
-huggingface_hub<0.26
