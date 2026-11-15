@@ -1,0 +1,357 @@
+{
+ "views": [
+  {
+   "label": "Late May",
+   "date": "2023-05-15",
+   "sensor": "L30",
+   "clear_share": 1.0,
+   "true": "space_1_true.png",
+   "green": "space_1_green.png"
+  },
+  {
+   "label": "Mid July",
+   "date": "2023-07-20",
+   "sensor": "S30",
+   "clear_share": 1.0,
+   "true": "space_2_true.png",
+   "green": "space_2_green.png"
+  },
+  {
+   "label": "Early September",
+   "date": "2023-09-04",
+   "sensor": "L30",
+   "clear_share": 1.0,
+   "true": "space_3_true.png",
+   "green": "space_3_green.png"
+  },
+  {
+   "label": "Late October",
+   "date": "2023-11-12",
+   "sensor": "S30",
+   "clear_share": 0.888,
+   "true": "space_4_true.png",
+   "green": "space_4_green.png"
+  }
+ ],
+ "size_km": 3.0,
+ "note": "",
+ "source": "NASA HLS v2.0 (Landsat 8/9 L30 + Sentinel-2 S30), 30 m",
+ "plots": {
+  "dates": [
+   {
+    "label": "Late May",
+    "date": "2023-05-15"
+   },
+   {
+    "label": "Mid July",
+    "date": "2023-07-20"
+   },
+   {
+    "label": "Early September",
+    "date": "2023-09-04"
+   },
+   {
+    "label": "Late October",
+    "date": "2023-11-12"
+   }
+  ],
+  "rows": [
+   {
+    "plot": 1,
+    "name": "Plot 1",
+    "design": "simple",
+    "tiles": [
+     {
+      "true": "plot1_1_true.png",
+      "green": "plot1_1_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot1_2_true.png",
+      "green": "plot1_2_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot1_3_true.png",
+      "green": "plot1_3_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot1_4_true.png",
+      "green": "plot1_4_green.png",
+      "clear_share": 0.0
+     }
+    ]
+   },
+   {
+    "plot": 2,
+    "name": "Plot 2",
+    "design": "simple",
+    "tiles": [
+     {
+      "true": "plot2_1_true.png",
+      "green": "plot2_1_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot2_2_true.png",
+      "green": "plot2_2_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot2_3_true.png",
+      "green": "plot2_3_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot2_4_true.png",
+      "green": "plot2_4_green.png",
+      "clear_share": 0.0
+     }
+    ]
+   },
+   {
+    "plot": 3,
+    "name": "Plot 3",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "plot3_1_true.png",
+      "green": "plot3_1_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot3_2_true.png",
+      "green": "plot3_2_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot3_3_true.png",
+      "green": "plot3_3_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot3_4_true.png",
+      "green": "plot3_4_green.png",
+      "clear_share": 0.021
+     }
+    ]
+   },
+   {
+    "plot": 4,
+    "name": "Plot 4",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "plot4_1_true.png",
+      "green": "plot4_1_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot4_2_true.png",
+      "green": "plot4_2_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot4_3_true.png",
+      "green": "plot4_3_green.png",
+      "clear_share": 1.0
+     },
+     {
+      "true": "plot4_4_true.png",
+      "green": "plot4_4_green.png",
+      "clear_share": 0.426
+     }
+    ]
+   }
+  ],
+  "note": "Only each field's own 30 m pixels are shown; nothing outside the field.",
+  "view": "field"
+ },
+ "farms": {
+  "dates": [
+   {
+    "label": "Late May",
+    "date": "2023-05-15"
+   },
+   {
+    "label": "Mid July",
+    "date": "2023-07-20"
+   },
+   {
+    "label": "Early September",
+    "date": "2023-09-04"
+   },
+   {
+    "label": "Late October",
+    "date": "2023-11-12"
+   }
+  ],
+  "rows": [
+   {
+    "plot": 1,
+    "name": "Farm field A",
+    "design": "simple",
+    "tiles": [
+     {
+      "true": "farm1_1_true.jpg",
+      "green": "farm1_1_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm1_2_true.jpg",
+      "green": "farm1_2_green.jpg",
+      "clear_share": 0.465
+     },
+     {
+      "true": "farm1_3_true.jpg",
+      "green": "farm1_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm1_4_true.jpg",
+      "green": "farm1_4_green.jpg",
+      "clear_share": 1.0
+     }
+    ]
+   },
+   {
+    "plot": 2,
+    "name": "Farm field B",
+    "design": "simple",
+    "tiles": [
+     {
+      "true": "farm2_1_true.jpg",
+      "green": "farm2_1_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm2_2_true.jpg",
+      "green": "farm2_2_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm2_3_true.jpg",
+      "green": "farm2_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm2_4_true.jpg",
+      "green": "farm2_4_green.jpg",
+      "clear_share": 1.0
+     }
+    ]
+   },
+   {
+    "plot": 3,
+    "name": "Farm field C",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "farm3_1_true.jpg",
+      "green": "farm3_1_green.jpg",
+      "clear_share": 0.0
+     },
+     {
+      "true": "farm3_2_true.jpg",
+      "green": "farm3_2_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm3_3_true.jpg",
+      "green": "farm3_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm3_4_true.jpg",
+      "green": "farm3_4_green.jpg",
+      "clear_share": 1.0
+     }
+    ]
+   },
+   {
+    "plot": 4,
+    "name": "Farm field D",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "farm4_1_true.jpg",
+      "green": "farm4_1_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm4_2_true.jpg",
+      "green": "farm4_2_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm4_3_true.jpg",
+      "green": "farm4_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm4_4_true.jpg",
+      "green": "farm4_4_green.jpg",
+      "clear_share": 0.484
+     }
+    ]
+   },
+   {
+    "plot": 5,
+    "name": "Farm field E",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "farm5_1_true.jpg",
+      "green": "farm5_1_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm5_2_true.jpg",
+      "green": "farm5_2_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm5_3_true.jpg",
+      "green": "farm5_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm5_4_true.jpg",
+      "green": "farm5_4_green.jpg",
+      "clear_share": 1.0
+     }
+    ]
+   },
+   {
+    "plot": 6,
+    "name": "Farm field F",
+    "design": "diverse",
+    "tiles": [
+     {
+      "true": "farm6_1_true.jpg",
+      "green": "farm6_1_green.jpg",
+      "clear_share": 0.008
+     },
+     {
+      "true": "farm6_2_true.jpg",
+      "green": "farm6_2_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm6_3_true.jpg",
+      "green": "farm6_3_green.jpg",
+      "clear_share": 1.0
+     },
+     {
+      "true": "farm6_4_true.jpg",
+      "green": "farm6_4_green.jpg",
+      "clear_share": 1.0
+     }
+    ]
+   }
+  ],
+  "note": "Each field is shown in a 1 km square of its surroundings (dimmed).",
+  "view": "context"
+ }
+}

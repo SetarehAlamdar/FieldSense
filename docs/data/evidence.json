@@ -1,0 +1,91 @@
+{
+ "labels": {
+  "measured": "Observed directly at this field (ground instrument, or satellite pixels inside the field).",
+  "validated": "Derived or modelled, and checked against independent ground truth; test result recorded.",
+  "modelled": "From a model or prediction not checked at this field.",
+  "assumed": "From literature or an expert rule; not tested here."
+ },
+ "evidence": [
+  {
+   "id": "power_precip_corrected",
+   "label": "validated",
+   "claim": "Daily rainfall at the field, from NASA POWER, corrected month by month to match local stations.",
+   "source": "NASA POWER (PRECTOTCORR), corrected against ECCC Fergus Shand Dam (4760)",
+   "test": "Correction fitted on 1996-2010, tested on 2011-2025 (years it never saw)",
+   "result": "Held-out error after correction: -4.7% of station rainfall",
+   "caveat": "~50 km grid: single storms are missed; good for seasons, not days. Elora RCS (ECCC 41983) reads -12% vs Fergus over 2011-2025"
+  },
+  {
+   "id": "power_temperature",
+   "label": "validated",
+   "claim": "Daily air temperature at the field (frost dates, heat units), corrected to the Elora station.",
+   "source": "NASA POWER (T2M, T2M_MIN, T2M_MAX), corrected against ECCC Elora RCS (41983)",
+   "test": "Monthly offsets fitted 2004-2014, tested on 2015-2025",
+   "result": "Night-time bias +1.0 -> +0.1 degC; frost-free days error +11 -> +4 days",
+   "caveat": "Fixes the average lean, not single nights: one unusual cold night can still be missed."
+  },
+  {
+   "id": "soilgrids_topsoil",
+   "label": "modelled",
+   "claim": "Topsoil (0-30 cm) texture, organic carbon, pH and bulk density, each with a 90% range.",
+   "source": "ISRIC SoilGrids 2.0, 250 m (Poggio et al., 2021)",
+   "test": "",
+   "result": "",
+   "caveat": "A prediction, not a sample. The organic-carbon range is very wide here; a lab soil test should replace it."
+  },
+  {
+   "id": "smap_l4_rootzone",
+   "label": "modelled",
+   "claim": "Typical root-zone soil wetness by month.",
+   "source": "NASA SMAP L4 (SPL4SMGP v8) via AppEEARS, 9 km",
+   "test": "",
+   "result": "",
+   "caveat": "One value for a 9 km square: shows wet and dry YEARS well, not wet and dry spots in a field."
+  },
+  {
+   "id": "hls_greenness",
+   "label": "measured",
+   "claim": "Greenness (NDVI) of each field on every clear satellite pass since 2015.",
+   "source": "NASA HLS v2.0, Landsat 8/9 (L30) + Sentinel-2 (S30), 30 m",
+   "test": "",
+   "result": "",
+   "caveat": "Clouds and snow leave gaps; gaps longer than 30 days are left empty, never filled in."
+  },
+  {
+   "id": "hls_crop_history",
+   "label": "validated",
+   "claim": "Which crop grew each year (winter wheat vs corn/soybean) and whether there was green cover off-season.",
+   "source": "Derived from NASA HLS greenness timing (fieldsense.phenology)",
+   "test": "Compared with partner field records, Elora rotation plots, 2015-2021",
+   "result": "winter wheat found in 2 of 2 wheat plot-years; corn/soybean labelled correctly in 26 of 26",
+   "caveat": "Thresholds were tuned at this site, and wheat cases are few; corn and soybean are not separated."
+  },
+  {
+   "id": "assumed_risk_thresholds",
+   "label": "assumed",
+   "claim": "Thresholds that turn weather into risks (e.g. 32 degC at corn pollination, 25 mm heavy rain).",
+   "source": "Agronomic rules of thumb in fieldsense.climate.RISKS",
+   "test": "",
+   "result": "",
+   "caveat": "To be checked against OMAFRA guidance; change a threshold and the odds change."
+  },
+  {
+   "id": "rotation_calendar_model",
+   "label": "modelled",
+   "claim": "Soil cover for rotations, estimated from a crop calendar (fieldsense/data/crops.json).",
+   "source": "Crop calendar rules of thumb",
+   "test": "",
+   "result": "",
+   "caveat": "Differs from satellite measurement by up to 24 points (CSS green share season: -10 pts; CSS green share off season: -3 pts; CSS spring bare share: -1 pts; SWC+covers green share season: +2 pts; SWC+covers green share off season: +11 pts; SWC+covers spring bare share: -24 pts)."
+  },
+  {
+   "id": "hls_crop_history_farms",
+   "label": "validated",
+   "claim": "Which crop grew each year on nearby farm fields (winter wheat vs corn/soybean), read from NASA HLS greenness.",
+   "source": "NASA HLS greenness timing (fieldsense.phenology), rules from the Elora trial",
+   "test": "Compared with AAFC Annual Crop Inventory on 6 farm fields near Elora, 2015-2025",
+   "result": "winter wheat found in 8 of 8 wheat field-years; corn/soybean labelled correctly in 53 of 58; 5 false wheat labels",
+   "caveat": "The crop map targets at least 85% accuracy and does not record cover crops; the fields were chosen from the same map."
+  }
+ ]
+}
