@@ -545,6 +545,7 @@ async function renderSpace() {
         ...r.tiles.map((t, i) => el("td", {}, el("img", { src: asset(t[mode]),
           alt: `${r.name || "Plot " + r.plot} (${r.design}), ${table.dates[i].label}, ${mode === "true" ? "true colour" : "greenness"}` })))));
       tbl.replaceChildren(el("thead", {}, head), el("tbody", {}, ...body));
+      tbl.classList.toggle("ctx", table.view === "context");
     };
     if (hasPlots) grid(meta.plots, $("plotgrid"));
     if (meta.farms && meta.farms.rows && meta.farms.rows.length) { grid(meta.farms, $("farmgrid")); $("farmgrid-wrap").hidden = false; }
@@ -559,14 +560,22 @@ async function renderSpace() {
   draw("true");
   const dates = hasPlots ? meta.plots.dates : meta.views;
   const year = dates[0].date.slice(0, 4);
-  $("space-lede").textContent = hasPlots
-    ? `Each square is one plot on a clear day in ${year}. Watch October: the simple plots are bare, the diverse plots are still green. Grey means cloud.`
-    : `A ${meta.size_km} × ${meta.size_km} km square around the Elora Research Station through ${year}. Grey means cloud.`;
-  if (!hasPlots) { $("plotgrid").closest(".plotgrid-box").hidden = true; }
+  const hasFarms = !!(meta.farms && meta.farms.rows && meta.farms.rows.length);
+  if (hasFarms) {
+    $("space-title").textContent = "Farm fields, seen from space";
+    $("space-lede").textContent = `Simple and diverse farm fields near Elora on clear days in ${meta.farms.dates[0].date.slice(0, 4)}, each in its surroundings. Watch the fall: simple fields are bare, diverse fields are still green. Grey means cloud.`;
+    $("plots-summary").textContent = "The Elora trial plots (small: each plot is only a few 30 m pixels)";
+  } else {
+    $("space-lede").textContent = hasPlots
+      ? `Each square is one plot on a clear day in ${year}. Watch October: the simple plots are bare, the diverse plots are still green. Grey means cloud.`
+      : `A ${meta.size_km} × ${meta.size_km} km square around the Elora Research Station through ${year}. Grey means cloud.`;
+    $("plots-details").open = true;
+  }
+  if (!hasPlots) { $("plots-details").hidden = true; }
   if (hasWide && hasPlots) $("wide-details").hidden = false;
   if (hasWide && !hasPlots) { const d = $("wide-details"); d.hidden = false; d.open = true; }
-  $("space-note").replaceChildren(meta.source || "NASA HLS", " ", badge("measured"),
-    hasPlots && meta.plots.note ? ` · ${meta.plots.note}` : "");
+  const note = hasFarms ? meta.farms.note : hasPlots ? meta.plots.note : "";
+  $("space-note").replaceChildren(meta.source || "NASA HLS", " ", badge("measured"), note ? ` · ${note}` : "");
   show("space-section");
 }
 

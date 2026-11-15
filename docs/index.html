@@ -137,17 +137,19 @@
   <section class="band space" id="space-section" hidden>
     <div class="wrap">
       <p class="kicker">Seen from space</p>
-      <h2 class="title">The four plots, seen from space</h2>
+      <h2 class="title" id="space-title">The four plots, seen from space</h2>
       <p class="section-lede" id="space-lede"></p>
       <div class="space-toggle" role="group" aria-label="Picture type">
         <button type="button" data-mode="true" aria-pressed="true">True colour</button>
         <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
       </div>
-      <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
       <div id="farmgrid-wrap" hidden>
-        <h3>Nearby farm fields, same dates</h3>
         <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
       </div>
+      <details class="more" id="plots-details">
+        <summary id="plots-summary">The Elora trial plots</summary>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
+      </details>
       <p class="evidence-line" id="space-note"></p>
       <details class="more" id="wide-details" hidden>
         <summary>Wider view: 3 km around the station</summary>

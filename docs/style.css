@@ -426,3 +426,7 @@ details.more > summary { color: var(--teal-deep); }
 .dev-legend { display: flex; gap: 6px; align-items: center; font-size: .72rem; color: #a9c5b6; }
 .dev-legend .sw { margin-left: 6px; }
 .w-tile.pic.ctx { width: 100%; max-width: 380px; margin: 10px auto; }
+
+/* Seen from space: farm fields in their surroundings */
+table.plotgrid.ctx td img { max-width: 170px; image-rendering: auto; object-fit: cover; border-radius: 10px; }
+#plots-details { margin-top: 18px; }

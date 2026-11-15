@@ -186,7 +186,8 @@ def _with_alpha(rgb, inside):
     return np.dstack([rgb, alpha])
 
 
-def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="plots", prefix="plot", names=None):
+def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="plots", prefix="plot", names=None,
+                   context_m=None, size=240):
     """For the dates in `found` (from find_clear_views), save each plot's true-colour and
     greenness picture and add a table (rows = fields, columns = dates) to space.json under `key`
     ("plots" for the trial plots, "farms" for nearby farm fields)."""
@@ -194,11 +195,16 @@ def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="pl
     designs = designs or {}
     rows = {pid: [] for pid in sorted(plots_lonlat)}
     for i, f in enumerate(found, start=1):
-        views = read_plot_views(f["links"], plots_lonlat)
+        views = (read_field_context(f["links"], plots_lonlat, context_m / 2) if context_m
+                 else read_plot_views(f["links"], plots_lonlat))
         for pid in rows:
             v = views[pid]
             tile = {}
             for kind, make in (("true", true_colour), ("green", greenness)):
+                if context_m:          # the field in its surroundings, smoothly enlarged
+                    tile[kind] = f"{prefix}{pid}_{i}_{kind}.jpg"
+                    render_context(make(v), v["poly_px"], size=size).save(os.path.join(out_dir, tile[kind]), quality=85)
+                    continue
                 img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
                 img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
                 tile[kind] = f"{prefix}{pid}_{i}_{kind}.png"
@@ -212,7 +218,9 @@ def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="pl
         "dates": [{"label": f["label"], "date": f["date"]} for f in found],
         "rows": [{"plot": int(pid), "name": names.get(pid, f"Plot {pid}"), "design": designs.get(pid, ""), "tiles": tiles}
                  for pid, tiles in rows.items()],
-        "note": "Only each field's own 30 m pixels are shown; nothing outside the field.",
+        "note": ("Each field is shown in a 1 km square of its surroundings (dimmed)." if context_m
+                 else "Only each field's own 30 m pixels are shown; nothing outside the field."),
+        "view": "context" if context_m else "field",
     }
     with open(path, "w") as fh:
         json.dump(meta, fh, indent=1)
