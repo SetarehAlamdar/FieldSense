@@ -116,3 +116,10 @@ def test_property_legume_share_never_exceeds_100_percent():
 def test_elora_rotations_are_three_years():
     assert all(len(r) == 3 for r in rt.CANDIDATES)
     assert CAND["CSS"].crops == ["corn", "soybean", "soybean"]
+
+
+def test_next_season_is_2027_after_wheat_in_2026():
+    hist = [{"year": y, "satellite_says": "winter wheat + green after harvest (cover crop?)" if y in (2020, 2023) else "corn or soybean"}
+            for y in range(2018, 2026)]
+    assert rt.NEXT_SEASON == 2027
+    assert rt.next_crop("SWC+covers", hist) == "corn"        # wheat 2020, 2023, (2026) -> corn in 2027

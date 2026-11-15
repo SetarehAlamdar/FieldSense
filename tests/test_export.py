@@ -98,3 +98,11 @@ def test_highlights_compare_conventional_and_diverse():
     h = export.highlights([pub("CSS", 1.0, 0.03, "corn or soybean (ask)"), pub("SWC+covers", 0.64, 0.39, "winter wheat")])
     assert [x["big"] for x in h] == ["100% vs 64%", "3% vs 39%", "26 in 100", "Winter wheat"]
     assert (h[0]["simple"], h[0]["diverse"]) == (100, 64)
+
+
+def test_public_profile_gives_the_next_season_crop():
+    from fieldsense.export import public_profile
+    hist = [{"year": y, "satellite_says": "winter wheat" if y in (2020, 2023) else "corn or soybean"} for y in range(2018, 2026)]
+    p = public_profile({"field": {"lat": 43.6412, "lon": -80.4123}, "history": hist,
+                        "rotation_options": {"current": "SWC+covers", "next_crop_2026": "winter wheat"}})
+    assert p["rotation_options"]["next_season"] == 2027 and p["rotation_options"]["next_crop"] == "corn"

@@ -82,7 +82,8 @@ function renderGlance(p) {
     g.append(box);
   };
   if (ro.current) stat("Rotation now", ROT_NAMES[ro.current] || ro.current, "read from satellite history", evLabel("hls_crop_history"));
-  if (ro.next_crop_2026) stat("In 2026", ro.next_crop_2026.split(" (")[0], ro.next_crop_2026.includes("(") ? "satellite can't tell which; ask the farmer" : "next in the cycle", evLabel("hls_crop_history"));
+  const nxt = ro.next_crop || ro.next_crop_2026;
+  if (nxt) stat(`In ${ro.next_season || 2026}`, nxt.split(" (")[0], nxt.includes("(") ? "satellite can't tell which; ask the farmer" : "next in the cycle", evLabel("hls_crop_history"));
   if (cov.recent_green_share_off_season != null) stat("Off-season living cover", pct(cov.recent_green_share_off_season), "share of off-season days green, last 5 years", "measured");
   if (cl.frost_free_days) stat("Frost-free season", `${Math.round(cl.frost_free_days.mid)} days`, `${Math.round(cl.frost_free_days.low)}–${Math.round(cl.frost_free_days.high)} in 8 of 10 years`, cl.frost_free_days.evidence && evLabel(cl.frost_free_days.evidence));
   if (cl.annual_precip) stat("Rain per year", `${Math.round(cl.annual_precip.mid)} mm`, `${Math.round(cl.annual_precip.low)}–${Math.round(cl.annual_precip.high)} in 8 of 10 years`, cl.annual_precip.evidence && evLabel(cl.annual_precip.evidence));
@@ -196,7 +197,7 @@ function renderOdds(p) {
 const COLS = [
   ["green_share_off_season", "Off-season living cover", +1, pct],
   ["spring_bare_share", "Bare in spring storms", -1, pct],
-  ["climate_risk_total", "2026 risk-hits /100 crop-years", -1, (v) => Math.round(v)],
+  ["climate_risk_total", "Next-season risk-hits /100 crop-years", -1, (v) => Math.round(v)],
   ["legume_share", "Legume years", +1, pct],
   ["min_years_between_same_crop", "Pest break (years)", +1, (v) => v],
   ["crops_to_manage", "Crops to manage", -1, (v) => v],
@@ -237,7 +238,7 @@ function renderRotations(p) {
   show("rotation-section");
 }
 
-const PARTS = [["what", "What it is"], ["soil_cover", "Soil cover"], ["climate_2026", "Climate in 2026"],
+const PARTS = [["what", "What it is"], ["soil_cover", "Soil cover"], ["climate_2026", "Climate next season"],
   ["nutrients_pests", "Nutrients & pests"], ["unknowns", "What we don't know"]];
 
 function renderExplanations(p) {
@@ -308,7 +309,7 @@ function renderDecide(p) {
   // step 3: weather
   const sOdds = storm ? Math.round(100 * storm.share) : null;
   const s3 = step(3, "Weigh next season's weather",
-    storm ? `${sOdds} in 100 possible 2026 springs bring a heavy storm, but a storm only hurts where the soil is bare. ` +
+    storm ? `${sOdds} in 100 possible springs next season bring a heavy storm, but a storm only hurts where the soil is bare. ` +
             "Adding frost, heat and drought risk for each crop gives the total weather risk per 100 crop-years. Lower is better."
           : "Weather risk per 100 crop-years for each rotation. Lower is better.",
     bars(cands.map((c) => [c.key, c.climate_risk_total, Math.max(...cands.map((x) => x.climate_risk_total))]), (v) => Math.round(v)));
@@ -680,7 +681,7 @@ async function renderStats(index) {
   const accFarms = accuracyFrom("hls_crop_history_farms"), accTrial = accuracyFrom("hls_crop_history");
   const cards = [
     years && [years, "", "years of satellite pictures per field"],
-    [1000, "", "possible 2026 seasons simulated"],
+    [1000, "", "possible next seasons simulated"],
     farms ? [farms, "", "nearby farm fields tested"] : [index.fields.length, "", "trial plots read from space"],
     accFarms != null ? [accFarms, "%", "of farm crop-years read correctly vs. Canada's crop map"]
       : accTrial != null ? [accTrial, "%", "of trial crop-years read correctly vs. field records"] : null,
@@ -759,7 +760,7 @@ async function renderDevice(index) {
 function renderLanding() {
   drawFields($("hero-fields"), 7);
   drawFields($("stats-fields"), 31);
-  typeLoop($("hero-type"), ["Protect your soil", "Plan for 2026 weather", "Choose your next crop", "Keep roots in the ground"]);
+  typeLoop($("hero-type"), ["Protect your soil", "Plan for 2027 weather", "Choose your next crop", "Keep roots in the ground"]);
   revealOnScroll();
 }
 renderLanding();

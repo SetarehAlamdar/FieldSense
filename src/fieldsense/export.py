@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 from .phenology import barcode_matrix, daily_ndvi, measured_cover_shares
-from .rotation import CRITERIA, rank_robustness
+from .rotation import CRITERIA, NEXT_SEASON, next_crop, rank_robustness
 
 PRIVATE_KEYS = {"area_ha", "location_source"}
 
@@ -45,6 +45,10 @@ def public_profile(profile, coord_decimals=2):
         if f.get(k) is not None:
             f[k] = round(float(f[k]), coord_decimals)
     f["location_note"] = f"Coordinates rounded to {coord_decimals} decimals (about 1 km)."
+    ro = p.get("rotation_options")
+    if ro and ro.get("current") and p.get("history"):
+        ro["next_season"] = NEXT_SEASON                  # the next decision: the season after this year's harvest
+        ro["next_crop"] = next_crop(ro["current"], p["history"], NEXT_SEASON)
     return p
 
 
@@ -112,7 +116,7 @@ def highlights(pubs):
     if "heavy_rain_on_bare_soil" in risks:
         r = risks["heavy_rain_on_bare_soil"]
         out.append({"big": f"{round(100 * r['share'])} in 100",
-                    "label": "Springs in 2026 with a heavy storm (25 mm+)",
+                    "label": f"Springs with a heavy storm (25 mm+), next season ({NEXT_SEASON})",
                     "note": f"from 1,000 possible seasons; it happened in {r['past_years']} past years", "evidence": "assumed"})
     fg = {}
     for p in farms:
@@ -126,9 +130,9 @@ def highlights(pubs):
                     "note": "soil bare in spring storms, simple vs diverse farm fields (rotation from Canada's crop map)",
                     "evidence": "measured"})
     for ro in groups.get("diverse", []):
-        nxt = ro.get("next_crop_2026", "")
+        nxt, yr = ro.get("next_crop") or ro.get("next_crop_2026", ""), ro.get("next_season", 2026)
         if nxt and "(" not in nxt:
-            out.append({"big": nxt[0].upper() + nxt[1:], "label": "What comes next on the diverse plots (2026)",
+            out.append({"big": nxt[0].upper() + nxt[1:], "label": f"What comes next on the diverse plots ({yr})",
                         "note": "read from their 3-year cycle, seen from space", "evidence": "validated"})
             break
     return out
