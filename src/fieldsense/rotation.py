@@ -1,4 +1,4 @@
-"""Rotation engine: compare crop rotations on soil cover, 2026 climate risk, nutrients and pests.
+"""Rotation engine: compare crop rotations on soil cover, next-season climate risk, nutrients and pests.
 
 Design choices (each one is a deliberate trade-off):
 
@@ -229,7 +229,12 @@ def detect_current(history, recent_years=6):
     return "CSS+rye" if has_cover else "CSS"
 
 
-def next_crop(rotation_key, history, target_year=2026):
+# The growing season the decision is for. The hackathon runs in November 2026, after this year's
+# harvest, so the next decision is for 2027.
+NEXT_SEASON = 2027
+
+
+def next_crop(rotation_key, history, target_year=NEXT_SEASON):
     """What the rotation puts in the field in target_year, if the satellite can tell."""
     rot = {r.key: r for r in CANDIDATES}[rotation_key]
     if "winter_wheat" not in rot.crops:
@@ -260,7 +265,7 @@ def explain(row, current_key, evidence, measured_cover=None):
                                f"soil bare on {100*cov['spring_bare_share']:.0f}% of spring days (15 Apr-15 Jun), "
                                f"{cover_source}.",
                        "evidence": evidence.get("soil_cover", "modelled")},
-        "climate_2026": {"text": f"About {row['climate_risk_total']:.0f} risk-hits per 100 crop-years in 2026 odds"
+        "climate_2026": {"text": f"About {row['climate_risk_total']:.0f} risk-hits per 100 crop-years in next-season odds"
                                  + (f"; the largest is {top.replace('_', ' ')} ({risks[top]:.0f} per 100)." if top else "."),
                          "evidence": evidence.get("climate_2026", "assumed")},
         "nutrients_pests": {"text": f"{int(row['crop_families'])} crop families; legumes in "
