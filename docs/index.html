@@ -7,71 +7,160 @@
   <meta name="description" content="A field's past, read from NASA satellites and climate data, to choose its next crop rotation, with the evidence behind every number.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="wrap">
-      <p class="eyebrow">NASA Space Apps 2026 · Team Star Farmer · Elora Research Station, Ontario</p>
-      <h1>FieldSense</h1>
-      <p class="lede">Which crop rotation protects your soil, and how risky is next season? Read from NASA satellites, with the evidence behind every number.</p>
+  <nav class="site-nav" aria-label="Main">
+    <div class="wrap nav-row">
+      <a class="logo" href="#top" aria-label="FieldSense home">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 29V13" /><path d="M16 17c-6 0-10-4-10-11 7 0 10 4 10 11z" /><path d="M16 14c0-6 3-10 10-10 0 7-3 10-10 10z" /></svg>
+        <span>Field<b>Sense</b></span>
+      </a>
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#compare">Simple vs diverse</a>
+        <a href="#watch-section">Watch a year</a>
+        <a href="#explore">Explore a field</a>
+      </div>
+      <a class="pill pill-indigo nav-cta" href="https://github.com/SetarehAlamdar/FieldSense">Open source</a>
     </div>
-  </header>
+  </nav>
 
-  <section class="wrap space" id="space-section" hidden>
-    <h2>The four plots, seen from space</h2>
-    <p class="section-lede" id="space-lede"></p>
-    <div class="space-toggle" role="group" aria-label="Picture type">
-      <button type="button" data-mode="true" aria-pressed="true">True colour</button>
-      <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
-    </div>
-    <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
-    <div id="farmgrid-wrap" hidden>
-      <h3>Nearby farm fields, same dates</h3>
-      <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
-    </div>
-    <p class="evidence-line" id="space-note"></p>
-    <details class="more" id="wide-details" hidden>
-      <summary>Wider view: 3 km around the station</summary>
-      <div class="space-grid" id="space-grid"></div>
-    </details>
-  </section>
-
-  <section class="wrap compare-top">
-    <div class="versus" aria-label="The two rotations compared">
-      <div class="rot simple">
-        <div class="rot-name">Simple rotation <small>plots 1–2</small></div>
-        <div class="steps"><span>Corn</span><i>→</i><span>Soybean</span><i>→</i><span>Soybean</span></div>
-        <div class="rot-note">no cover crops: soil bare between crops</div>
-        </div>
-      <div class="vs">vs</div>
-      <div class="rot diverse">
-        <div class="rot-name">Diverse rotation <small>plots 3–4</small></div>
-        <div class="steps"><span>Soybean</span><i>→</i><span>Wheat <em>+ clover</em></span><i>→</i><span>Corn <em>+ rye</em></span></div>
-        <div class="rot-note">cover crops after wheat and corn keep roots in the ground</div>
+  <header class="hero" id="top">
+    <canvas class="hero-fields" id="hero-fields" aria-hidden="true"></canvas>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="wrap hero-row">
+      <div class="hero-text">
+        <p class="hero-kicker">NASA Space Apps 2026 · Team Star Farmer · Ontario</p>
+        <h1><span>See.</span><span>Compare.</span><span>Decide.</span></h1>
+        <p class="hero-sub">Choose your next crop rotation with NASA satellites</p>
+        <p class="hero-type" aria-live="off"><span id="hero-type">Protect your soil</span><i class="caret" aria-hidden="true"></i></p>
+        <div class="hero-actions">
+          <a class="pill pill-teal" href="#watch-section">▶ Watch a year</a>
+          <a class="pill pill-ghost" href="#explore">Explore a field</a>
         </div>
       </div>
-    <div class="highlights" id="highlights"></div>
-  </section>
-
-  <section class="wrap watch" id="watch-section" hidden>
-    <h2>Watch a year</h2>
-    <p class="section-lede" id="watch-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
-    <div class="watch-controls">
-      <label>Fields <select id="watch-pair"></select></label>
-      <label>Year <select id="watch-year"></select></label>
-      <button type="button" id="watch-play">▶ Play</button>
-      <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="true" aria-pressed="true">True colour</button><button type="button" data-mode="green" aria-pressed="false">Greenness</button></span>
-      <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
+      <figure class="device" aria-label="A simple and a diverse field through one year, from satellite pictures">
+        <div class="device-screen">
+          <div class="dev-bar"><span>FieldSense · Watch a year</span><span id="dev-date"></span></div>
+          <div class="dev-tiles" id="dev-tiles"></div>
+          <div class="dev-track"><span id="dev-progress"></span></div>
+        </div>
+      </figure>
     </div>
-    <div class="watch-date" id="watch-date"></div>
-    <div class="watch-grid" id="watch-grid"></div>
+    <svg class="hero-curve" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 L0 70 C 360 130 900 -10 1440 40 L1440 120 Z" /></svg>
+  </header>
+
+  <section class="band" id="how">
+    <div class="wrap">
+      <p class="kicker">How it works</p>
+      <h2 class="title">A decision tool built on evidence</h2>
+      <div class="features">
+        <a class="feature reveal" href="#barcode-section">
+          <svg class="ficon" viewBox="0 0 48 48" aria-hidden="true"><rect x="17" y="17" width="14" height="14" rx="2" transform="rotate(45 24 24)" /><path d="M10 10l7 7M31 31l7 7M6 18l8-8M34 42l8-8" /><path d="M36 8a8 8 0 0 1 4 4M37 3a13 13 0 0 1 8 8" /></svg>
+          <h3>Ten years from space</h3>
+          <p>Every clear NASA satellite pass since 2015 shows when the soil was bare and when it was green.</p>
+        </a>
+        <a class="feature reveal" href="#odds-section">
+          <svg class="ficon" viewBox="0 0 48 48" aria-hidden="true"><path d="M14 30a9 9 0 1 1 3-17 11 11 0 0 1 21 4 7 7 0 0 1-1 13z" /><path d="M17 36l-2 5M25 36l-2 5M33 36l-2 5" /></svg>
+          <h3>Next season's odds</h3>
+          <p>1,000 possible 2026 seasons from 30 years of corrected NASA weather: frost, heat, downpours, drought.</p>
+        </a>
+        <a class="feature reveal" href="#decide-section">
+          <svg class="ficon" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6v36M14 42h20M8 14h32" /><path d="M8 14l-5 12a5 5 0 0 0 10 0zM40 14l-5 12a5 5 0 0 0 10 0z" /></svg>
+          <h3>Rotations compared</h3>
+          <p>Soil cover, climate risk and simplicity side by side. Set your own priorities and watch the ranking change.</p>
+        </a>
+        <a class="feature reveal" href="#passport-section">
+          <svg class="ficon" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 4l16 6v12c0 10-7 17-16 22C15 39 8 32 8 22V10z" /><path d="M17 24l5 5 9-10" /></svg>
+          <h3>Evidence for every number</h3>
+          <p>Each result says whether it was measured, validated, modelled or assumed, and how it was checked.</p>
+        </a>
+      </div>
+    </div>
   </section>
 
+  <section class="band tint compare-top" id="compare">
+    <div class="wrap">
+      <p class="kicker">The question</p>
+      <h2 class="title">Simple or diverse rotation?</h2>
+      <div class="versus" aria-label="The two rotations compared">
+        <div class="rot simple">
+          <div class="rot-name">Simple rotation</div>
+          <div class="steps"><span>Corn</span><i>→</i><span>Soybean</span><i>→</i><span>Soybean</span></div>
+          <div class="rot-note">no cover crops: soil bare between crops</div>
+        </div>
+        <div class="vs">vs</div>
+        <div class="rot diverse">
+          <div class="rot-name">Diverse rotation</div>
+          <div class="steps"><span>Soybean</span><i>→</i><span>Wheat <em>+ clover</em></span><i>→</i><span>Corn <em>+ rye</em></span></div>
+          <div class="rot-note">cover crops after wheat and corn keep roots in the ground</div>
+        </div>
+      </div>
+      <div class="highlights" id="highlights"></div>
+    </div>
+  </section>
+
+  <section class="band watch" id="watch-section" hidden>
+    <div class="wrap">
+      <p class="kicker">See it happen</p>
+      <h2 class="title">Watch a year</h2>
+      <p class="section-lede" id="watch-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
+      <div class="watch-controls">
+        <label>Fields <select id="watch-pair"></select></label>
+        <label>Year <select id="watch-year"></select></label>
+        <button type="button" id="watch-play">▶ Play</button>
+        <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="true" aria-pressed="true">True colour</button><button type="button" data-mode="green" aria-pressed="false">Greenness</button></span>
+        <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
+      </div>
+      <div class="watch-date" id="watch-date"></div>
+      <div class="watch-grid" id="watch-grid"></div>
+    </div>
+  </section>
+
+  <section class="stats-band" aria-label="FieldSense in numbers">
+    <canvas class="hero-fields" id="stats-fields" aria-hidden="true"></canvas>
+    <div class="stats-shade" aria-hidden="true"></div>
+    <div class="wrap stats-row">
+      <div class="stats-text">
+        <h2>Validated on a 10-year rotation trial. Tested on nearby farms.</h2>
+        <p>FieldSense learned its rules on the Elora Research Station rotation plots, then read farms it had never seen and checked itself against Canada's crop map.</p>
+      </div>
+      <div class="stat-cards" id="stat-cards"></div>
+    </div>
+  </section>
+
+  <section class="band space" id="space-section" hidden>
+    <div class="wrap">
+      <p class="kicker">Seen from space</p>
+      <h2 class="title">The four plots, seen from space</h2>
+      <p class="section-lede" id="space-lede"></p>
+      <div class="space-toggle" role="group" aria-label="Picture type">
+        <button type="button" data-mode="true" aria-pressed="true">True colour</button>
+        <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
+      </div>
+      <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
+      <div id="farmgrid-wrap" hidden>
+        <h3>Nearby farm fields, same dates</h3>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
+      </div>
+      <p class="evidence-line" id="space-note"></p>
+      <details class="more" id="wide-details" hidden>
+        <summary>Wider view: 3 km around the station</summary>
+        <div class="space-grid" id="space-grid"></div>
+      </details>
+    </div>
+  </section>
+
+  <div class="explore-head band tint" id="explore">
+    <div class="wrap">
+      <p class="kicker">Explore a field</p>
+      <h2 class="title">Pick a field and see everything FieldSense knows about it</h2>
+    </div>
+  </div>
   <div class="tabs-bar">
     <div class="wrap">
-      <span class="tabs-label">Explore a field</span>
       <nav class="plots" id="plot-tabs" aria-label="Choose a field"></nav>
     </div>
   </div>
@@ -155,9 +244,25 @@
     </section>
   </main>
 
-  <footer class="wrap foot">
-    <p><strong>Data:</strong> NASA POWER · NASA HLS (Landsat 8/9 + Sentinel-2) · NASA SMAP L4 via AppEEARS · ISRIC SoilGrids 2.0 · Environment and Climate Change Canada stations 4760, 41983. Field records used only for aggregate validation.</p>
-    <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a> · How it works: <a href="https://github.com/SetarehAlamdar/FieldSense/blob/main/METHODS.md">METHODS.md</a></p>
+  <section class="cta-band">
+    <div class="wrap cta-row">
+      <div>
+        <h2>Open data, open code, honest evidence.</h2>
+        <p>Every number on this page can be rebuilt from public NASA data with the FieldSense code.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="pill pill-teal" href="https://github.com/SetarehAlamdar/FieldSense">See the code</a>
+        <a class="pill pill-ghost" href="https://github.com/SetarehAlamdar/FieldSense/blob/main/METHODS.md">How it works</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p class="logo foot-logo"><span>Field<b>Sense</b></span></p>
+      <p><strong>Data:</strong> NASA POWER · NASA HLS (Landsat 8/9 + Sentinel-2) · NASA SMAP L4 via AppEEARS · ISRIC SoilGrids 2.0 · AAFC Annual Crop Inventory · Environment and Climate Change Canada stations 4760, 41983. Field records used only for aggregate validation.</p>
+      <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a> · NASA Space Apps 2026 · Team Star Farmer</p>
+    </div>
   </footer>
   <script src="app.js"></script>
 </body>
