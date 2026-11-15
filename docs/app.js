@@ -255,6 +255,202 @@ function renderExplanations(p) {
   show("explain-section");
 }
 
+// ---------- How FieldSense decides (4 steps + live priorities)
+const PRIORITIES = [
+  { key: "soil", label: "Protect the soil", crit: [["green_share_off_season", +1], ["spring_bare_share", -1]] },
+  { key: "weather", label: "Avoid weather risk", crit: [["climate_risk_total", -1]] },
+  { key: "nutrients", label: "Nitrogen & pest break", crit: [["legume_share", +1], ["min_years_between_same_crop", +1]] },
+  { key: "simple", label: "Keep it simple", crit: [["crops_to_manage", -1]] },
+];
+const weights = { soil: 50, weather: 50, nutrients: 50, simple: 50 };
+
+function scoreRotations(cands) {
+  const norm = {};
+  for (const pr of PRIORITIES) for (const [k, dir] of pr.crit) {
+    const xs = cands.map((c) => dir * c[k]);
+    const lo = Math.min(...xs), hi = Math.max(...xs);
+    norm[k] = Object.fromEntries(cands.map((c) => [c.key, hi > lo ? (dir * c[k] - lo) / (hi - lo) : 0.5]));
+  }
+  const total = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+  return cands.map((c) => ({
+    key: c.key,
+    score: PRIORITIES.reduce((s, pr) => s + weights[pr.key] * pr.crit.reduce((a, [k]) => a + norm[k][c.key], 0) / pr.crit.length, 0) / total,
+  })).sort((a, b) => b.score - a.score);
+}
+
+function renderDecide(p) {
+  const ro = p.rotation_options;
+  if (!ro || !ro.candidates) return;
+  const cands = ro.candidates;
+  const name = (k) => ROT_NAMES[k] || k;
+  const storm = (p.climate_odds && p.climate_odds.risks && p.climate_odds.risks.heavy_rain_on_bare_soil) || null;
+  const bars = (vals, fmt, cls) => el("div", { class: "mini-bars" }, ...vals.map(([k, v, max]) => {
+    const bar = el("div", { class: "mb-bar" }, el("span"));
+    bar.firstChild.style.width = `${Math.max(2, 100 * v / (max || 1))}%`;
+    return el("div", { class: `mb-row ${k === ro.current ? "now" : ""} ${cls ? cls(k) : ""}` },
+      el("div", { class: "mb-name" }, name(k), k === ro.current ? el("span", { class: "tag" }, "NOW") : ""), bar, el("div", { class: "mb-val" }, fmt(v)));
+  }));
+  const step = (n, title, text, body) => el("li", { class: "step4" }, el("div", { class: "step-n" }, String(n)),
+    el("div", { class: "step-body" }, el("h3", {}, title), el("p", {}, text), body || ""));
+
+  // step 1: the field's past
+  const yrs = (p.history || []).map((h) => h.year);
+  const wheatYears = (p.history || []).filter((h) => h.satellite_says.startsWith("winter wheat")).map((h) => h.year);
+  const s1 = step(1, "Read the field's past from space",
+    `${yrs.length} years of NASA satellite greenness show what grew and when the soil was bare` +
+    (wheatYears.length ? `: winter wheat in ${wheatYears.join(", ")}.` : ": corn or soybean every year, no winter wheat."),
+    el("p", { class: "step-hint" }, "→ This field's rotation now: ", el("strong", {}, name(ro.current))));
+  // step 2: soil protection
+  const s2 = step(2, "Measure how well each rotation protects the soil",
+    "Share of spring days (15 Apr – 15 Jun) with bare soil, when heavy rain washes soil away. Lower is better.",
+    bars(cands.map((c) => [c.key, c.spring_bare_share, 1]), (v) => pct(v)));
+  // step 3: weather
+  const sOdds = storm ? Math.round(100 * storm.share) : null;
+  const s3 = step(3, "Weigh next season's weather",
+    storm ? `${sOdds} in 100 possible 2026 springs bring a heavy storm, but a storm only hurts where the soil is bare. ` +
+            "Adding frost, heat and drought risk for each crop gives the total weather risk per 100 crop-years. Lower is better."
+          : "Weather risk per 100 crop-years for each rotation. Lower is better.",
+    bars(cands.map((c) => [c.key, c.climate_risk_total, Math.max(...cands.map((x) => x.climate_risk_total))]), (v) => Math.round(v)));
+  const s4 = step(4, "You choose what matters",
+    "Soil, weather, nutrients, simplicity: farmers weigh them differently, so FieldSense doesn't hide one fixed score.",
+    el("p", { class: "step-hint" }, "↓ Try the sliders below"));
+  $("steps4").replaceChildren(s1, s2, s3, s4);
+
+  // sliders
+  const draw = () => {
+    const ranked = scoreRotations(cands);
+    $("ranking").replaceChildren(...ranked.map((r, i) => {
+      const bar = el("div", { class: "rk-bar" }, el("span"));
+      bar.firstChild.style.width = `${Math.max(2, 100 * r.score)}%`;
+      return el("div", { class: `rk-row ${i === 0 ? "win" : ""}` }, el("div", { class: "rk-pos" }, String(i + 1)),
+        el("div", { class: "rk-name" }, name(r.key), r.key === ro.current ? el("span", { class: "tag" }, "NOW") : ""), bar);
+    }));
+    const win = ranked[0].key;
+    const share = ro.robustness_best_share && ro.robustness_best_share[win];
+    $("verdict").replaceChildren("With these priorities, ", el("strong", {}, name(win)), " comes out best",
+      win === ro.current ? " (what this field does now)." : ".",
+      share != null ? ` It wins under ${pct(share)} of 2,000 random priority mixes.` : "");
+  };
+  $("sliders").replaceChildren(...PRIORITIES.map((pr) => {
+    const input = el("input", { type: "range", min: "0", max: "100", value: String(weights[pr.key]), "aria-label": pr.label });
+    const out = el("span", { class: "sl-val" }, String(weights[pr.key]));
+    input.oninput = () => { weights[pr.key] = +input.value; out.textContent = input.value; draw(); };
+    return el("label", { class: "slider" }, el("span", { class: "sl-label" }, pr.label), input, out);
+  }));
+  draw();
+  show("decide-section");
+}
+
+// ---------- Watch a year: two fields side by side, day by day
+const profileCache = {};
+async function getProfile(file) {
+  if (!profileCache[file]) profileCache[file] = (await fetch(DATA + file)).json();
+  return profileCache[file];
+}
+
+function phaseOf(vals, d, label) {
+  const v = vals[d];
+  if (v == null) return ["No clear view", "clouds or snow", "none"];
+  let prev = null;
+  for (let k = d - 7; k >= Math.max(0, d - 21); k--) if (vals[k] != null) { prev = vals[k]; break; }
+  const peakSoFar = Math.max(0, ...vals.slice(0, d + 1).filter((x) => x != null));
+  const offSeason = d < 135 || d > 273;
+  const wheat = label && label.startsWith("winter wheat");
+  if (v < 0.3) return peakSoFar >= 0.5 && d > 180 ? ["Bare after harvest", "soil exposed until next crop", "bare"] : ["Bare soil", "nothing growing, soil exposed", "bare"];
+  if (v >= 0.5) {
+    if (wheat && d < 200) return ["Winter wheat growing", "sown last fall, covering the soil early", "green"];
+    if (offSeason) return ["Cover crop growing", "living roots outside the main season", "green"];
+    return ["Crop growing", "full canopy", "green"];
+  }
+  if (prev != null && v < prev - 0.02) return [d > 180 ? "Drying down / harvest" : "Thinning", "greenness falling", "mid"];
+  return ["Greening up", "new growth emerging", "mid"];
+}
+
+async function renderWatch(index) {
+  const groups = [...new Set(index.fields.map((f) => f.group || "Elora trial"))];
+  const pairs = [];
+  for (const g of groups) {
+    const fs = index.fields.filter((f) => (f.group || "Elora trial") === g);
+    const s = fs.find((f) => f.rotation_design === "simple"), d = fs.find((f) => f.rotation_design === "diverse");
+    if (s && d) pairs.push({ label: `${g}: ${s.name.replace("Elora rotation ", "").replace(/^plot/, "Plot")} vs ${d.name.replace("Elora rotation ", "").replace(/^plot/, "Plot")}`, files: [s.file, d.file] });
+  }
+  if (!pairs.length) return;
+  const pairSel = $("watch-pair"), yearSel = $("watch-year"), playBtn = $("watch-play"), speedSel = $("watch-speed");
+  pairSel.replaceChildren(...pairs.map((p, i) => el("option", { value: String(i) }, p.label)));
+  let profs = [], day = 0, timer = null, panels = [];
+
+  const stop = () => { if (timer) clearInterval(timer); timer = null; playBtn.textContent = day >= 364 ? "↺ Replay" : "▶ Play"; };
+  const build = () => {
+    const year = +yearSel.value;
+    panels = profs.map((p) => {
+      const bc = p.barcode, r = bc.years.indexOf(year);
+      const vals = r >= 0 ? bc.values[r].map((v) => (v == null ? null : v / bc.scale)) : new Array(365).fill(null);
+      const h = (p.history || []).find((x) => x.year === year);
+      const tile = el("div", { class: "w-tile" });
+      const phase = el("div", { class: "w-phase" }), sub = el("div", { class: "w-sub" });
+      const bare = el("strong"), greenN = el("strong");
+      const W = 300, H = 70;
+      const curve = svg("svg", { viewBox: `0 0 ${W} ${H}`, class: "w-curve" });
+      let path = "", pen = false;
+      vals.forEach((v, i) => {
+        if (v == null) { pen = false; return; }
+        const x = (i / 364) * W, y = H - 4 - Math.max(0, Math.min(1, v)) * (H - 8);
+        path += `${pen ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`; pen = true;
+      });
+      curve.append(svg("line", { x1: 0, x2: W, y1: H - 4 - 0.3 * (H - 8), y2: H - 4 - 0.3 * (H - 8), stroke: "var(--line)", "stroke-dasharray": "3 3" }));
+      curve.append(svg("path", { d: path, fill: "none", stroke: "var(--accent)", "stroke-width": 2 }));
+      const dot = svg("circle", { r: 4.5, fill: "var(--ink)" });
+      curve.append(dot);
+      const f = p.field, design = f.rotation_design;
+      const card = el("div", { class: `w-card ${design}` },
+        el("div", { class: "w-head" }, el("strong", {}, f.name.replace("Elora rotation ", "").replace(/^plot/, "Plot")), " ",
+          el("span", { class: `design ${design}` }, design)),
+        el("div", { class: "w-crop" }, h ? shortCrop(h.satellite_says) : ""),
+        tile, phase, sub, curve,
+        el("div", { class: "w-count" }, el("span", {}, "Bare days so far: ", bare), el("span", {}, "Green days: ", greenN)));
+      return { vals, label: h && h.satellite_says, tile, phase, sub, dot, bare, greenN, card, W, H };
+    });
+    $("watch-grid").replaceChildren(...panels.map((x) => x.card));
+    paint();
+  };
+  const paint = () => {
+    $("watch-date").textContent = doyToDate(day + 1);
+    for (const x of panels) {
+      const v = x.vals[day];
+      x.tile.style.background = v == null ? "var(--none)" : green(v);
+      const [ph, sub, kind] = phaseOf(x.vals, day, x.label);
+      x.phase.textContent = ph; x.sub.textContent = sub; x.phase.className = `w-phase ${kind}`;
+      const upto = x.vals.slice(59, day + 1);
+      x.bare.textContent = String(upto.filter((u) => u != null && u < 0.3).length);
+      x.greenN.textContent = String(upto.filter((u) => u != null && u >= 0.4).length);
+      const y = v == null ? x.H - 4 : x.H - 4 - Math.max(0, Math.min(1, v)) * (x.H - 8);
+      x.dot.setAttribute("cx", ((day / 364) * x.W).toFixed(1)); x.dot.setAttribute("cy", y.toFixed(1));
+      x.dot.setAttribute("opacity", v == null ? 0.25 : 1);
+    }
+  };
+  const loadPair = async () => {
+    stop();
+    profs = await Promise.all(pairs[+pairSel.value].files.map(getProfile));
+    const years = profs.map((p) => new Set(p.barcode.years)).reduce((a, b) => new Set([...a].filter((y) => b.has(y))));
+    const list = [...years].sort();
+    const prevYear = +yearSel.value;
+    yearSel.replaceChildren(...list.map((y) => el("option", { value: String(y) }, String(y))));
+    yearSel.value = String(list.includes(prevYear) ? prevYear : list.includes(2023) ? 2023 : list[list.length - 1]);
+    day = 59; build();
+  };
+  playBtn.onclick = () => {
+    if (timer) { stop(); return; }
+    if (day >= 364) day = 59;
+    playBtn.textContent = "❚❚ Pause";
+    timer = setInterval(() => { day += 1; paint(); if (day >= 364) stop(); }, +speedSel.value);
+  };
+  speedSel.onchange = () => { if (timer) { stop(); playBtn.click(); } };
+  pairSel.onchange = loadPair;
+  yearSel.onchange = () => { stop(); day = 59; build(); };
+  await loadPair();
+  show("watch-section");
+}
+
 function renderPassport() {
   const lg = $("legend");
   lg.replaceChildren(...Object.entries(LABEL_TEXT).map(([k, v]) => el("span", {}, badge(k), " ", v)));
@@ -333,7 +529,7 @@ function renderGaps(p) {
 async function loadField(entry, buttons) {
   buttons.forEach((b) => b.setAttribute("aria-pressed", b.dataset.file === entry.file ? "true" : "false"));
   const p = await (await fetch(DATA + entry.file)).json();
-  renderGlance(p); renderBarcode(p); renderCoverChart(p); renderOdds(p); renderRotations(p); renderExplanations(p); renderGaps(p);
+  renderGlance(p); renderBarcode(p); renderCoverChart(p); renderOdds(p); renderDecide(p); renderRotations(p); renderExplanations(p); renderGaps(p);
   history.replaceState(null, "", `#${entry.file.replace(".json", "")}`);
 }
 
@@ -366,6 +562,7 @@ async function main() {
     renderFigures(index.figures);
     renderHighlights(index.highlights);
     renderSpace();
+    renderWatch(index);
     $("loading").remove();
   } catch (err) {
     $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +

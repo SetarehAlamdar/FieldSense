@@ -55,6 +55,19 @@
     <div class="highlights" id="highlights"></div>
   </section>
 
+  <section class="wrap watch" id="watch-section" hidden>
+    <h2>Watch a year</h2>
+    <p class="section-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
+    <div class="watch-controls">
+      <label>Fields <select id="watch-pair"></select></label>
+      <label>Year <select id="watch-year"></select></label>
+      <button type="button" id="watch-play">▶ Play</button>
+      <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
+    </div>
+    <div class="watch-date" id="watch-date"></div>
+    <div class="watch-grid" id="watch-grid"></div>
+  </section>
+
   <div class="tabs-bar">
     <div class="wrap">
       <span class="tabs-label">Explore a field</span>
@@ -87,6 +100,19 @@
         <p>1,000 possible 2026 seasons, each built from one of 30 real years (1996–2025) of NASA POWER weather, corrected against Environment Canada stations and brought to today's warmth. Each card also shows how often the risk really happened in those 30 years.</p>
         <p class="evidence-line" id="odds-evidence"></p>
       </details>
+    </section>
+
+    <section id="decide-section" hidden>
+      <h2>How FieldSense decides</h2>
+      <p class="section-lede">Four steps from satellite data to a rotation choice, for this field.</p>
+      <ol class="steps4" id="steps4"></ol>
+      <div class="decide-live">
+        <h3>Step 4 · You choose what matters</h3>
+        <p class="section-lede small">Move the sliders. The ranking updates instantly.</p>
+        <div class="sliders" id="sliders"></div>
+        <div class="ranking" id="ranking"></div>
+        <p class="verdict" id="verdict"></p>
+      </div>
     </section>
 
     <section id="rotation-section" hidden>
