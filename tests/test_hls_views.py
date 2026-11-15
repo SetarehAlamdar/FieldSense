@@ -79,3 +79,21 @@ def test_plot_views_show_only_pixels_inside_each_plot(tmp_path):
     from PIL import Image
     img = Image.open(tmp_path / meta["plots"]["rows"][0]["tiles"][0]["green"])
     assert img.mode == "RGBA" and img.getpixel((0, 0))[3] == 0     # corner outside the plot is transparent
+
+
+
+def test_field_timeline_keeps_only_clear_pictures(tmp_path):
+    from pyproj import Transformer
+    to_ll = Transformer.from_crs("EPSG:32617", "EPSG:4326", always_xy=True).transform
+    square = lambda x, y, s: [to_ll(x, y), to_ll(x + s, y), to_ll(x + s, y + s), to_ll(x, y + s), to_ll(x, y)]
+    fields = {1: square(X0 - 300, Y0 - 300, 300)}
+    (tmp_path / "a").mkdir(); (tmp_path / "b").mkdir()
+    clear = _write_granule(tmp_path / "a", red=400, nir=3000, fmask=0)
+    cloudy = _write_granule(tmp_path / "b", red=400, nir=3000, fmask=0b00000010)
+    grans = [{"date": "2023-05-10", "links": clear}, {"date": "2023-05-20", "links": cloudy},
+             {"date": "2023-06-01", "links": clear}]
+    meta = hls_views.add_field_timeline(grans, fields, tmp_path, 2023, designs={1: "simple"})
+    frames = meta["fields"][0]["frames"]
+    assert [f["date"] for f in frames] == ["2023-05-10", "2023-06-01"]      # the cloudy date is dropped
+    assert frames[0]["green"].startswith("data:image/png;base64,")         # pictures packed in the JSON
+    assert json.loads((tmp_path / "timeline.json").read_text())["year"] == 2023

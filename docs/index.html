@@ -57,11 +57,12 @@
 
   <section class="wrap watch" id="watch-section" hidden>
     <h2>Watch a year</h2>
-    <p class="section-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
+    <p class="section-lede" id="watch-lede">A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.</p>
     <div class="watch-controls">
       <label>Fields <select id="watch-pair"></select></label>
       <label>Year <select id="watch-year"></select></label>
       <button type="button" id="watch-play">▶ Play</button>
+      <span class="watch-pic" id="watch-pic" role="group" aria-label="Picture type" hidden><button type="button" data-mode="true" aria-pressed="true">True colour</button><button type="button" data-mode="green" aria-pressed="false">Greenness</button></span>
       <label>Speed <select id="watch-speed"><option value="80">slow</option><option value="40" selected>normal</option><option value="15">fast</option></select></label>
     </div>
     <div class="watch-date" id="watch-date"></div>
