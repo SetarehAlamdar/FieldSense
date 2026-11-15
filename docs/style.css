@@ -464,3 +464,14 @@ table.scorecard { width: 100%; border-collapse: collapse; min-width: 760px; back
 .mini-bc { width: 100%; height: auto; display: block; border-radius: 4px; image-rendering: pixelated; }
 .rd-years { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin-top: 3px; }
 .rd-nums { font-size: .86rem; margin-top: 8px; }
+.cm-pin.custom .cm-dot { fill: #e2a33a; stroke: #b5651d; }
+.rd-climate { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 16px 18px; margin: 0 0 16px; }
+.rd-climate h4 { margin: 0 0 4px; font-family: var(--display); color: var(--indigo); font-size: 1.05rem; }
+.rd-sum { margin: 0 0 10px; font-size: .92rem; }
+.rd-odds { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 18px; }
+.rd-odd { font-size: .86rem; line-height: 1.35; }
+.rd-odd strong { margin-right: 6px; color: var(--ink); }
+.rd-odd small { color: var(--muted); }
+.rd-bar { height: 6px; background: var(--empty); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.rd-bar span { display: block; height: 100%; background: var(--risk); }
+.rd-note { font-size: .82rem; color: var(--muted); margin: 10px 0 0; }

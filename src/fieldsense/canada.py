@@ -174,8 +174,10 @@ def _boot_diff(simple, diverse, n=2000, seed=2026, level=0.90):
 VALIDATED_FROM, MIN_CHECKS = 0.80, 15
 
 
-def scorecard(region_key, fields):
-    """One region's results from its field records."""
+def scorecard(region_key, fields, meta=None):
+    """One region's results from its field records. meta: name/place/lon/lat/system for a
+    place that is not one of the REGIONS."""
+    meta = meta or REGIONS[region_key]
     checks = [c for f in fields for c in f["check"]]
     n_ok = sum(c["agree"] for c in checks)
     acc = n_ok / len(checks) if checks else None
@@ -194,8 +196,8 @@ def scorecard(region_key, fields):
                     "diff": _boot_diff(sv, dv)}
     label = ("validated" if acc is not None and len(checks) >= MIN_CHECKS and acc >= VALIDATED_FROM
              else "not validated")
-    return {"region": region_key, **REGIONS[region_key],
-            "lon": round(REGIONS[region_key]["lon"], 2), "lat": round(REGIONS[region_key]["lat"], 2),
+    return {"region": region_key, **meta,
+            "lon": round(meta["lon"], 2), "lat": round(meta["lat"], 2),
             "n_simple": len(g["simple"]), "n_diverse": len(g["diverse"]),
             "timing": {"agree": n_ok, "checked": len(checks), "share": round(acc, 3) if acc is not None else None,
                        "by_class": {k: {"agree": v[0], "checked": v[1]} for k, v in by_class.items()},
@@ -205,15 +207,21 @@ def scorecard(region_key, fields):
 
 # ------------------------------------------------------------------ running one region (Colab)
 def find_region_fields(region_key, cache_dir, aci_years=range(2019, 2026), half_size_m=5000, max_per_group=4):
-    """Fields in a 10 x 10 km square around the region's point, from the AAFC crop map.
+    """Fields in a 10 x 10 km square around one of the REGIONS (see `find_fields_near`)."""
+    r = REGIONS[region_key]
+    return find_fields_near(r["lon"], r["lat"], r["name"], cache_dir, aci_years, half_size_m, max_per_group)
+
+
+def find_fields_near(lon, lat, name, cache_dir, aci_years=range(2019, 2026), half_size_m=5000, max_per_group=4):
+    """Fields in a 10 x 10 km square around any point in Canada, from the AAFC crop map.
 
     Tries smaller fields if it finds fewer than two of either kind. Returns (fields, epsg, box);
     each field has "lonlat" (its outline: keep it private), "codes" and "crops" per year.
     """
     from .sources import aci
-    r = REGIONS[region_key]
+    r = {"name": name}
     years = list(aci_years)
-    epsg, box = aci.box_around(r["lon"], r["lat"], half_size_m)
+    epsg, box = aci.box_around(lon, lat, half_size_m)
     stack = np.stack([aci.get_aci(y, epsg, box, cache_dir=cache_dir) for y in years])
     names = {c: v[0] for c, v in CROPS.items()}
     fields = []
@@ -302,23 +310,33 @@ def region_records(ndvi, fields, years=range(2021, 2026)):
     return out
 
 
-def export_canada(records_by_region, out_path):
+def export_canada(records_by_region, out_path, places=None, climate=None):
     """Write the page's canada.json: one scorecard per region plus its fields (no outlines,
-    no field coordinates; only each region's rounded centre point)."""
+    no field coordinates; only each region's rounded centre point).
+
+    places: {key: {"name", "place", "lon", "lat", "system"}} for locations that are not REGIONS
+    (marked "custom": true); climate: {key: dict from anywhere.climate_for_point}.
+    """
     import json
 
     from .export import check_public
+    places, climate = places or {}, climate or {}
+    metas = {**REGIONS, **places}
     regions = []
-    for key in REGIONS:                                  # west to east
+    for key in sorted(records_by_region, key=lambda k: metas[k]["lon"]):      # west to east
         recs = records_by_region.get(key)
-        if not recs:
+        if not recs or key not in metas:
             continue
-        sc = scorecard(key, recs)
+        sc = scorecard(key, recs, metas[key])
+        sc["custom"] = key in places and key not in REGIONS
+        if key in climate:
+            sc["climate"] = climate[key]
         sc["fields"] = [{k: v for k, v in r.items() if k != "check"} | {
             "timing_agree": sum(c["agree"] for c in r["check"]), "timing_checked": len(r["check"])} for r in recs]
         regions.append(sc)
     allf = [r for k in records_by_region for r in records_by_region[k]]
-    pooled = scorecard(next(iter(records_by_region)), allf) if allf else None
+    first = next(iter(records_by_region), None)
+    pooled = scorecard(first, allf, metas[first]) if allf else None
     out = {"regions": regions,
            "all": {"timing": pooled["timing"], "cover": pooled["cover"],
                    "n_simple": pooled["n_simple"], "n_diverse": pooled["n_diverse"]} if pooled else None,
