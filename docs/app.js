@@ -703,7 +703,7 @@ function myFieldPanel(regions, select) {
     const near = regions.map((r) => ({ r, d: km(lat, lon, r.lat, r.lon) })).sort((a, b) => a.d - b.d)[0];
     out.replaceChildren(`Point ${lat.toFixed(4)}, ${lon.toFixed(4)}. Closest location FieldSense has measured: `,
       el("button", { type: "button", class: "linkish" }, `${near.r.name} (${near.r.place})`), `, ${Math.round(near.d)} km away. `,
-      "For your own field, open the notebook and paste this location into the first box.");
+      "For your own field, open the FieldSense app and paste this location.");
     out.querySelector(".linkish").onclick = () => { select(near.r.region); $("region-detail").scrollIntoView({ behavior: "smooth", block: "start" }); };
     if (navigator.clipboard) navigator.clipboard.writeText(`${lat}, ${lon}`).then(() => out.append(" (Copied to your clipboard.)"), () => {});
   };
