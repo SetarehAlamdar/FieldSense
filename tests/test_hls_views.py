@@ -160,3 +160,32 @@ def test_auto_context_fits_a_big_field(tmp_path):
     links = _write_granule(tmp_path, red=400, nir=3000, fmask=0)
     v = hls_views.read_field_context(links, {1: square(X0 - 600, Y0 - 600, 1200)}, half_size_m=None)[1]
     assert v["red"].shape[0] >= 50 and not v["inside"][0].any() and not v["inside"][-1].any()   # margin all round
+
+
+
+def test_neat_outline_straightens_a_staircase_rectangle():
+    from shapely.geometry import Polygon
+    # a field traced along pixels: a rectangle tilted 30 degrees, as stairs
+    import math
+    pts = []
+    for i in range(12):
+        x = 5 + i * math.cos(math.radians(30)); y = 5 + i * math.sin(math.radians(30))
+        pts += [(round(x), round(y))]
+    rect = Polygon([(5, 5), (15.4, 11), (11.4, 17.9), (1, 11.9)])
+    stairs = [(round(x), round(y)) for x, y in rect.exterior.coords]
+    neat = hls_views.neat_outline(rect.exterior.coords)
+    assert len(neat) == 5                                   # 4 corners + closing point
+    assert abs(Polygon(neat).area - rect.buffer(0.5, join_style=2).area) / rect.area < 0.15
+    l_shape = [(0, 0), (10, 0), (10, 4), (4, 4), (4, 10), (0, 10), (0, 0)]
+    assert len(hls_views.neat_outline(l_shape)) > 5        # an L stays an L
+
+
+
+def test_neat_outline_does_not_square_off_a_tilted_l():
+    import math
+    from shapely.geometry import Polygon
+    a = math.radians(25)
+    L = [(-10, -8), (10, -8), (10, 2), (2, 2), (2, 8), (-10, 8), (-10, -8)]
+    tilted = [(17 + x * math.cos(a) - y * math.sin(a), 17 + x * math.sin(a) + y * math.cos(a)) for x, y in L]
+    neat = Polygon(hls_views.neat_outline(tilted))
+    assert len(neat.exterior.coords) > 5                    # still an L, not a rectangle
