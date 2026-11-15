@@ -262,3 +262,12 @@ table.tradeoff { border-collapse: collapse; width: 100%; min-width: 640px; font-
 @media (max-width: 560px) { .rk-row { grid-template-columns: 1.4em 1fr; } .rk-bar { grid-column: 2; } }
 
 .tag { font-size: .7rem; color: var(--accent); font-weight: 700; margin-left: 6px; letter-spacing: .04em; }
+
+/* Watch a year with real satellite pictures */
+.w-tile.pic { height: 220px; background: #1d2a1f !important; display: grid; place-items: center; position: relative; overflow: hidden; }
+.w-tile.pic img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+.w-tile.pic .w-shot { position: absolute; left: 8px; bottom: 6px; font-size: .75rem; color: #fff; background: rgba(0,0,0,.45); padding: 2px 7px; border-radius: 6px; }
+.watch-controls .watch-pic button { background: var(--card); color: var(--ink); border-color: var(--line); font-weight: 500; padding: 5px 10px; margin-left: 0; border-radius: 0; }
+.watch-controls .watch-pic button:first-child { border-radius: 8px 0 0 8px; }
+.watch-controls .watch-pic button:last-child { border-radius: 0 8px 8px 0; margin-left: -1px; }
+.watch-controls .watch-pic button[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }

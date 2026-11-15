@@ -374,7 +374,23 @@ async function renderWatch(index) {
     const s = fs.find((f) => f.rotation_design === "simple"), d = fs.find((f) => f.rotation_design === "diverse");
     if (s && d) pairs.push({ label: `${g}: ${s.name.replace("Elora rotation ", "").replace(/^plot/, "Plot")} vs ${d.name.replace("Elora rotation ", "").replace(/^plot/, "Plot")}`, files: [s.file, d.file] });
   }
+  // optional: every clear satellite picture of two farm fields through one year (Lesson 9, Step 2c)
+  let tl = null;
+  try { tl = await (await fetch(DATA + "timeline.json")).json(); } catch (e) { tl = null; }
+  if (tl && tl.fields) {
+    const s = tl.fields.find((f) => f.design === "simple" && f.frames.length);
+    const d = tl.fields.find((f) => f.design === "diverse" && f.frames.length);
+    if (s && d) pairs.unshift({ label: `Nearby farms (satellite pictures): ${s.name} vs ${d.name}`, files: [s.file, d.file], year: tl.year });
+  }
   if (!pairs.length) return;
+  let picMode = "true";
+  const picBox = $("watch-pic");
+  picBox.querySelectorAll("button").forEach((b) => (b.onclick = () => {
+    picMode = b.dataset.mode;
+    picBox.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    paint();
+  }));
+  const dayOf = (iso) => { const t = new Date(iso + "T00:00:00Z"); return Math.round((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5); };
   const pairSel = $("watch-pair"), yearSel = $("watch-year"), playBtn = $("watch-play"), speedSel = $("watch-speed");
   pairSel.replaceChildren(...pairs.map((p, i) => el("option", { value: String(i) }, p.label)));
   let profs = [], day = 0, timer = null, panels = [];
@@ -382,11 +398,20 @@ async function renderWatch(index) {
   const stop = () => { if (timer) clearInterval(timer); timer = null; playBtn.textContent = day >= 364 ? "↺ Replay" : "▶ Play"; };
   const build = () => {
     const year = +yearSel.value;
+    const pics = !!(tl && year === tl.year && pairs[+pairSel.value].year);
+    picBox.hidden = !pics;
+    $("watch-lede").textContent = pics
+      ? "A simple and a diverse farm field side by side, through one year of real NASA satellite pictures (every clear day)."
+      : "A simple and a diverse field side by side, day by day, coloured by their real greenness from NASA satellites.";
     panels = profs.map((p) => {
       const bc = p.barcode, r = bc.years.indexOf(year);
       const vals = r >= 0 ? bc.values[r].map((v) => (v == null ? null : v / bc.scale)) : new Array(365).fill(null);
       const h = (p.history || []).find((x) => x.year === year);
-      const tile = el("div", { class: "w-tile" });
+      const tf = tl && year === tl.year ? tl.fields.find((t) => t.file === p.file) : null;
+      const frames = tf ? tf.frames.map((fr) => ({ ...fr, d: dayOf(fr.date) })) : null;
+      const tile = el("div", { class: frames && frames.length ? "w-tile pic" : "w-tile" });
+      let img = null, shot = null;
+      if (frames && frames.length) { img = el("img", { alt: "" }); shot = el("span", { class: "w-shot" }); tile.append(img, shot); }
       const phase = el("div", { class: "w-phase" }), sub = el("div", { class: "w-sub" });
       const bare = el("strong"), greenN = el("strong");
       const W = 300, H = 70;
@@ -408,7 +433,7 @@ async function renderWatch(index) {
         el("div", { class: "w-crop" }, h ? shortCrop(h.satellite_says) : ""),
         tile, phase, sub, curve,
         el("div", { class: "w-count" }, el("span", {}, "Bare days so far: ", bare), el("span", {}, "Green days: ", greenN)));
-      return { vals, label: h && h.satellite_says, tile, phase, sub, dot, bare, greenN, card, W, H };
+      return { frames, img, shot, vals, label: h && h.satellite_says, tile, phase, sub, dot, bare, greenN, card, W, H };
     });
     $("watch-grid").replaceChildren(...panels.map((x) => x.card));
     paint();
@@ -417,7 +442,14 @@ async function renderWatch(index) {
     $("watch-date").textContent = doyToDate(day + 1);
     for (const x of panels) {
       const v = x.vals[day];
-      x.tile.style.background = v == null ? "var(--none)" : green(v);
+      if (x.img) {
+        let fr = null;
+        for (const c of x.frames) { if (c.d <= day) fr = c; else break; }
+        fr = fr || x.frames[0];
+        const src = fr[picMode].startsWith("data:") ? fr[picMode] : asset(fr[picMode]);
+        if (x.img.getAttribute("src") !== src) x.img.setAttribute("src", src);
+        x.shot.textContent = `satellite picture of ${doyToDate(fr.d + 1)}`;
+      } else x.tile.style.background = v == null ? "var(--none)" : green(v);
       const [ph, sub, kind] = phaseOf(x.vals, day, x.label);
       x.phase.textContent = ph; x.sub.textContent = sub; x.phase.className = `w-phase ${kind}`;
       const upto = x.vals.slice(59, day + 1);
@@ -430,12 +462,14 @@ async function renderWatch(index) {
   };
   const loadPair = async () => {
     stop();
-    profs = await Promise.all(pairs[+pairSel.value].files.map(getProfile));
+    const pair = pairs[+pairSel.value];
+    profs = await Promise.all(pair.files.map(async (f) => ({ ...(await getProfile(f)), file: f })));
     const years = profs.map((p) => new Set(p.barcode.years)).reduce((a, b) => new Set([...a].filter((y) => b.has(y))));
     const list = [...years].sort();
     const prevYear = +yearSel.value;
     yearSel.replaceChildren(...list.map((y) => el("option", { value: String(y) }, String(y))));
-    yearSel.value = String(list.includes(prevYear) ? prevYear : list.includes(2023) ? 2023 : list[list.length - 1]);
+    const want = pair.year && list.includes(pair.year) ? pair.year : list.includes(prevYear) ? prevYear : list.includes(2023) ? 2023 : list[list.length - 1];
+    yearSel.value = String(want);
     day = 59; build();
   };
   playBtn.onclick = () => {

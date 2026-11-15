@@ -217,3 +217,64 @@ def add_plot_views(found, plots_lonlat, out_dir, designs=None, scale=24, key="pl
     with open(path, "w") as fh:
         json.dump(meta, fh, indent=1)
     return meta
+
+
+# ------------------------------------------------------------------ a year of pictures per field
+def search_granules(bbox, start, end, max_cloud=80):
+    """All HLS granules over `bbox` between two dates: [{"date", "sensor", "links"}], oldest first."""
+    import earthaccess
+    out = []
+    for short_name in ("HLSL30", "HLSS30"):
+        for g in earthaccess.search_data(short_name=short_name, version="2.0", bounding_box=bbox,
+                                         temporal=(start, end), cloud_cover=(0, max_cloud), count=-1):
+            info = hls.granule_info(g["meta"]["native-id"])
+            links = view_links(g.data_links(), info["sensor"])
+            if links:
+                out.append({"date": info["date"].strftime("%Y-%m-%d"), "sensor": info["sensor"],
+                            "tile": info["tile"], "links": links})
+    if out:                                    # keep one tile so each date is counted once
+        tiles = [g["tile"] for g in out]
+        main = max(set(tiles), key=tiles.count)
+        out = [g for g in out if g["tile"] == main]
+    return sorted(out, key=lambda g: g["date"])
+
+
+def add_field_timeline(granules, fields_lonlat, out_dir, year, designs=None, names=None, files=None,
+                       max_bad=0.1, scale=6):
+    """Every clear picture of each field through one year, for the page's "Watch a year" animation.
+
+    granules: from `search_granules` (one year). A picture is kept when at most `max_bad`
+    of the field's pixels are cloudy or missing. Saves timeline.json, with the pictures packed inside it. Only pixels inside each field are drawn;
+    everything else is transparent.
+    """
+    import base64
+    import io
+    from PIL import Image
+    designs, names, files = designs or {}, names or {}, files or {}
+    frames = {fid: [] for fid in fields_lonlat}
+    for g in granules:
+        try:
+            views = read_plot_views(g["links"], fields_lonlat)
+        except Exception as err:
+            print(f"  skipped {g['date']}: {err}")
+            continue
+        for fid, v in views.items():
+            if v["bad_fraction"] > max_bad or (frames[fid] and frames[fid][-1]["date"] == g["date"]):
+                continue
+            entry = {"date": g["date"], "clear": round(1 - v["bad_fraction"], 3)}
+            for kind, make in (("true", true_colour), ("green", greenness)):
+                img = Image.fromarray(_with_alpha(make(v), v["inside"]), "RGBA")
+                img = img.resize((img.width * scale, img.height * scale), Image.NEAREST)
+                buf = io.BytesIO()
+                img.save(buf, format="PNG", optimize=True)
+                # packed inside timeline.json: one file instead of hundreds (GitHub's web upload takes 100 at a time)
+                entry[kind] = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+            frames[fid].append(entry)
+    meta = {"year": int(year), "fields": [
+        {"id": int(fid), "file": files.get(fid, f"farm_{fid}.json"), "name": names.get(fid, f"Field {fid}"),
+         "design": designs.get(fid, ""), "frames": frames[fid]} for fid in fields_lonlat]}
+    with open(os.path.join(out_dir, "timeline.json"), "w") as fh:
+        json.dump(meta, fh, indent=1)
+    for f in meta["fields"]:
+        print(f"{f['name']}: {len(f['frames'])} clear pictures in {year}")
+    return meta
