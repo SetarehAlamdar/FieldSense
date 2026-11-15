@@ -513,3 +513,18 @@ table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px
 .mf-map { height: 340px; border-radius: 12px; overflow: hidden; background: #1d2a1f; }
 .mf-hint { font-size: .85rem; color: var(--muted); margin: 6px 0 0; }
 .leaflet-container { font: inherit; }
+
+/* Calmer region panel */
+.rd-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 16px; }
+.rd-chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: .85rem; color: var(--muted); }
+.rd-chip.ok { color: var(--measured); border-color: var(--measured); font-weight: 600; }
+.rd-climate h4 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rd-top3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 10px 0 4px; }
+@media (max-width: 640px) { .rd-top3 { grid-template-columns: 1fr; } }
+.rd-risk strong { font-family: var(--display); font-size: 1.8rem; color: var(--risk); line-height: 1; }
+.rd-risk small { color: var(--muted); }
+.rd-risk span { display: block; font-size: .88rem; margin-top: 4px; }
+.rd-more { margin-top: 8px; font-size: .88rem; }
+.rd-more ul { margin: 6px 0; padding-left: 18px; }
+.rd-field .rd-nums { font-size: .85rem; font-weight: 600; margin-top: 8px; }
+.rd-foot { font-size: .82rem; color: var(--muted); margin: 10px 0 0; }
