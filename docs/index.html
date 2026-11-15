@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -137,8 +138,12 @@
       <div class="myfield" id="myfield">
         <div class="mf-text">
           <h3>Try your own field</h3>
-          <p>Paste your field's location from Google Maps (right-click on the field → click the numbers). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. It runs in our web app in about 5–10 minutes, with no login. Nothing is stored or published.</p>
+          <p>Click on your field on the satellite map (or paste its location from Google Maps). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. It runs in our web app in about 5–10 minutes, with no login. Nothing is stored or published.</p>
           <p class="mf-alt">Prefer to run it yourself? Open the <a href="https://colab.research.google.com/github/SetarehAlamdar/FieldSense/blob/main/notebooks/FieldSense_My_Field.ipynb" target="_blank" rel="noopener">Colab notebook</a> (free <a href="https://urs.earthdata.nasa.gov/users/new">NASA Earthdata account</a> needed).</p>
+        </div>
+        <div class="mf-map-box">
+          <div id="mf-map" class="mf-map" role="application" aria-label="Satellite map: click on your field"></div>
+          <p class="mf-hint">Zoom in and <strong>click in the middle of your field</strong>, or type its location below.</p>
         </div>
         <form class="mf-form" id="mf-form">
           <label for="mf-loc">Latitude, longitude</label>
@@ -307,6 +312,7 @@
       <p>Open source (Apache 2.0): <a href="https://github.com/SetarehAlamdar/FieldSense">github.com/SetarehAlamdar/FieldSense</a> · NASA Space Apps 2026 · Team Star Farmer</p>
     </div>
   </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

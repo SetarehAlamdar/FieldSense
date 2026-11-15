@@ -45,10 +45,18 @@ CROPS = {
     131: ("fallow", FALLOW),
 }
 CLASSES = [WINTER, SPRING, SUMMER, FORAGE, FALLOW]
+# Crop-map classes that are not farm fields (AAFC Annual Crop Inventory legend)
+LAND = {10: "cloud", 20: "water", 30: "exposed land / barren", 34: "urban / developed", 35: "greenhouses",
+        50: "shrubland", 80: "wetland", 85: "peatland", 110: "grassland", 120: "agriculture (undifferentiated)",
+        200: "forest", 210: "coniferous forest", 220: "broadleaf forest", 230: "mixed forest"}
+FARM_CODES = set(CROPS) | {120}
 
 
 def crop_name(code):
-    return CROPS.get(int(code), (f"other ({int(code)})", None))[0]
+    code = int(code)
+    if code in CROPS:
+        return CROPS[code][0]
+    return LAND.get(code, f"other ({code})")
 
 
 def crop_class(code):
