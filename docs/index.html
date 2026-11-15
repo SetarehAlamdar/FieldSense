@@ -35,7 +35,7 @@
     <div class="hero-shade" aria-hidden="true"></div>
     <div class="wrap hero-row">
       <div class="hero-text">
-        <p class="hero-kicker">NASA Space Apps 2026 · Team Star Farmer · Ontario</p>
+        <p class="hero-kicker">NASA Space Apps 2026 · Team Star Farmer · Canada</p>
         <h1><span>See.</span><span>Compare.</span><span>Decide.</span></h1>
         <p class="hero-sub">Choose your next crop rotation with NASA satellites</p>
         <p class="hero-type" aria-live="off"><span id="hero-type">Protect your soil</span><i class="caret" aria-hidden="true"></i></p>
@@ -125,6 +125,49 @@
     </div>
   </section>
 
+  <section class="band space" id="space-section" hidden>
+    <div class="wrap">
+      <p class="kicker">Seen from space</p>
+      <h2 class="title" id="space-title">The four plots, seen from space</h2>
+      <p class="section-lede" id="space-lede"></p>
+      <div class="space-toggle" role="group" aria-label="Picture type">
+        <button type="button" data-mode="true" aria-pressed="true">True colour</button>
+        <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
+      </div>
+      <div id="moments-wrap" hidden>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid moments" id="momentgrid"></table></div>
+      </div>
+      <div id="farmgrid-wrap" hidden>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
+      </div>
+      <details class="more" id="farms-details" hidden>
+        <summary id="farms-summary">More farm fields, on the same four dates</summary>
+        <div id="farms-slot"></div>
+      </details>
+      <details class="more" id="plots-details">
+        <summary id="plots-summary">The Elora trial plots</summary>
+        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
+      </details>
+      <p class="evidence-line" id="space-note"></p>
+      <details class="more" id="wide-details" hidden>
+        <summary>Wider view: 3 km around the station</summary>
+        <div class="space-grid" id="space-grid"></div>
+      </details>
+    </div>
+  </section>
+
+  <section class="stats-band" aria-label="FieldSense in numbers">
+    <canvas class="hero-fields" id="stats-fields" aria-hidden="true"></canvas>
+    <div class="stats-shade" aria-hidden="true"></div>
+    <div class="wrap stats-row">
+      <div class="stats-text">
+        <h2 id="stats-title">Validated on a 10-year rotation trial. Tested on nearby farms.</h2>
+        <p id="stats-text">FieldSense learned its rules on the Elora Research Station rotation plots, then read farms it had never seen and checked itself against Canada's crop map.</p>
+      </div>
+      <div class="stat-cards" id="stat-cards"></div>
+    </div>
+  </section>
+
   <section class="band tint canada" id="canada-section" hidden>
     <div class="wrap">
       <p class="kicker">Across Canada</p>
@@ -158,53 +201,13 @@
     </div>
   </section>
 
-  <section class="stats-band" aria-label="FieldSense in numbers">
-    <canvas class="hero-fields" id="stats-fields" aria-hidden="true"></canvas>
-    <div class="stats-shade" aria-hidden="true"></div>
-    <div class="wrap stats-row">
-      <div class="stats-text">
-        <h2>Validated on a 10-year rotation trial. Tested on nearby farms.</h2>
-        <p>FieldSense learned its rules on the Elora Research Station rotation plots, then read farms it had never seen and checked itself against Canada's crop map.</p>
-      </div>
-      <div class="stat-cards" id="stat-cards"></div>
-    </div>
-  </section>
 
-  <section class="band space" id="space-section" hidden>
-    <div class="wrap">
-      <p class="kicker">Seen from space</p>
-      <h2 class="title" id="space-title">The four plots, seen from space</h2>
-      <p class="section-lede" id="space-lede"></p>
-      <div class="space-toggle" role="group" aria-label="Picture type">
-        <button type="button" data-mode="true" aria-pressed="true">True colour</button>
-        <button type="button" data-mode="green" aria-pressed="false">Greenness</button>
-      </div>
-      <div id="moments-wrap" hidden>
-        <div class="table-scroll plotgrid-box"><table class="plotgrid moments" id="momentgrid"></table></div>
-      </div>
-      <div id="farmgrid-wrap" hidden>
-        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="farmgrid"></table></div>
-      </div>
-      <details class="more" id="farms-details" hidden>
-        <summary id="farms-summary">More farm fields, on the same four dates</summary>
-        <div id="farms-slot"></div>
-      </details>
-      <details class="more" id="plots-details">
-        <summary id="plots-summary">The Elora trial plots</summary>
-        <div class="table-scroll plotgrid-box"><table class="plotgrid" id="plotgrid"></table></div>
-      </details>
-      <p class="evidence-line" id="space-note"></p>
-      <details class="more" id="wide-details" hidden>
-        <summary>Wider view: 3 km around the station</summary>
-        <div class="space-grid" id="space-grid"></div>
-      </details>
-    </div>
-  </section>
 
   <div class="explore-head band tint" id="explore">
     <div class="wrap">
-      <p class="kicker">Explore a field</p>
-      <h2 class="title">Pick a field and see everything FieldSense knows about it</h2>
+      <p class="kicker">In depth</p>
+      <h2 class="title">The Elora trial and nearby farms, field by field</h2>
+      <p class="section-lede">Everything FieldSense knows about the fields it was validated on: ten years from space, next season's odds, and how it decides. For any other field, use <a href="#myfield">Try your own field</a>.</p>
     </div>
   </div>
   <div class="tabs-bar">
