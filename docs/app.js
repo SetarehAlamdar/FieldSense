@@ -691,6 +691,65 @@ function climateBox(c) {
         ". Thresholds and rotation options for each province's own crops are the next step.")));
 }
 
+// "Try your own field": checks the location, names the nearest measured location, and
+// sends the farmer to the My Field notebook (the full analysis needs NASA login and ~15 min).
+function myFieldPanel(regions, select) {
+  const km = (a, b, c, d) => {
+    const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
+    return 2 * 6371 * Math.asin(Math.sqrt(x));
+  };
+  const APP = "https://setarehalamdar-fieldsense.hf.space/";
+  let marker = null, map = null;
+  const setPoint = (lat, lon) => {
+    $("mf-go").href = `${APP}?loc=${lat.toFixed(5)},${lon.toFixed(5)}`;
+    $("mf-go").textContent = "Read this field in the FieldSense app →";
+    if (map) {
+      if (marker) marker.setLatLng([lat, lon]);
+      else marker = L.circleMarker([lat, lon], { radius: 9, color: "#fff", weight: 3, fillColor: "#e2a33a", fillOpacity: 1 }).addTo(map);
+    }
+  };
+  if (typeof L !== "undefined" && $("mf-map")) {
+    map = L.map("mf-map", { scrollWheelZoom: false }).setView([50.5, -98], 4);
+    // Satellite background: Esri World Imagery; if its tiles fail, switch to Sentinel-2 cloudless (EOX, keyless)
+    const esri = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      maxZoom: 18, attribution: "Imagery © Esri, Maxar, Earthstar Geographics" });
+    const s2 = L.tileLayer("https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2020_3857/default/g/{z}/{y}/{x}.jpg", {
+      maxZoom: 17, attribution: '<a href="https://s2maps.eu">Sentinel-2 cloudless</a> by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2020)' });
+    let failed = 0, loaded = 0;
+    const toS2 = () => { if (map.hasLayer(esri)) { map.removeLayer(esri); s2.addTo(map); } };
+    esri.on("tileload", () => { loaded++; });
+    esri.on("tileerror", () => { if (++failed >= 3 && loaded === 0) toS2(); });
+    esri.addTo(map);
+    setTimeout(() => { if (loaded === 0) toS2(); }, 6000);
+    for (const r of regions) L.circleMarker([r.lat, r.lon], { radius: 6, color: "#3b3f99", fillColor: "#5aa58f", fillOpacity: 0.9, weight: 2 })
+      .bindTooltip(`${r.name}: measured`).addTo(map);
+    map.on("click", (e) => {
+      $("mf-loc").value = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+      $("mf-form").requestSubmit ? $("mf-form").requestSubmit() : $("mf-form").onsubmit(new Event("submit"));
+    });
+    setTimeout(() => map.invalidateSize(), 300);                // the section was hidden while the map was built
+    if ("IntersectionObserver" in window) new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && map.invalidateSize())).observe($("mf-map"));
+  } else if ($("mf-map")) {
+    $("mf-map").closest(".mf-map-box").hidden = true;          // no internet for the map library: typing still works
+  }
+  $("mf-form").onsubmit = (e) => {
+    e.preventDefault();
+    const out = $("mf-out");
+    const m = $("mf-loc").value.match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) { out.textContent = "Please paste two numbers: latitude, longitude (for example 50.45, -104.61)."; return; }
+    const lat = +m[1], lon = +m[2];
+    if (!(lat > 41.5 && lat < 60 && lon > -141 && lon < -52)) { out.textContent = "That point isn't in Canada's farmland (latitude 42–60, longitude −141 to −52)."; return; }
+    setPoint(lat, lon);
+    if (map && map.getZoom() < 13) map.setView([lat, lon], 14);
+    const near = regions.map((r) => ({ r, d: km(lat, lon, r.lat, r.lon) })).sort((a, b) => a.d - b.d)[0];
+    out.replaceChildren(`Point ${lat.toFixed(4)}, ${lon.toFixed(4)}. Closest location FieldSense has measured: `,
+      el("button", { type: "button", class: "linkish" }, `${near.r.name} (${near.r.place})`), `, ${Math.round(near.d)} km away. `,
+      "Check the pin is in the middle of your field, then open the app: it starts reading right away.");
+    out.querySelector(".linkish").onclick = () => { select(near.r.region); $("region-detail").scrollIntoView({ behavior: "smooth", block: "start" }); };
+    if (navigator.clipboard) navigator.clipboard.writeText(`${lat}, ${lon}`).then(() => out.append(" (Copied to your clipboard.)"), () => {});
+  };
+}
+
 async function renderCanada() {
   let data;
   try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { console.info("No canada.json:", e); return; }
