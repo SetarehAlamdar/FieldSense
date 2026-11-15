@@ -702,8 +702,10 @@ async function renderCanada() {
   const a = data.all, d = a && a.cover.bare_share_season.diff;
   if (d) {
     const fewer = -Math.round(100 * d.diff);
+    const provs = data.regions.filter((r) => !r.custom).length, where = data.regions.length > provs
+      ? `${data.regions.length} locations in ${provs} provinces` : `${provs} provinces`;
     $("canada-headline").replaceChildren(
-      el("strong", {}, fewer > 0 ? `Across ${data.regions.length} provinces, diverse rotations leave the soil bare ${fewer} points less of the season` : `Across ${data.regions.length} provinces, no clear difference in bare days`),
+      el("strong", {}, fewer > 0 ? `Across ${where}, diverse rotations leave the soil bare ${fewer} points less of the season` : `Across ${where}, no clear difference in bare days`),
       ` (90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields). Crop timing read correctly in ${a.timing.agree} of ${a.timing.checked} field-years.`);
   }
   $("canada-rule").replaceChildren(data.source, " ", badge("measured"), ` · ${data.rule} Intervals resample fields, so few fields give wide intervals.`);
