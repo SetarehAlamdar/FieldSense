@@ -935,6 +935,23 @@ async function renderStats(index) {
   let years = null;
   try { years = (await getProfile(index.fields[0].file)).barcode.years.length; } catch (e) { years = null; }
   const accFarms = accuracyFrom("hls_crop_history_farms"), accTrial = accuracyFrom("hls_crop_history");
+  let ca = null;
+  try { ca = await (await fetch(DATA + "canada.json")).json(); } catch (e) { ca = null; }
+  if (ca && ca.all && ca.all.timing && ca.all.timing.checked) {
+    const nf = ca.all.n_simple + ca.all.n_diverse, prov = ca.regions.filter((r) => !r.custom).length;
+    const t = ca.all.timing, d = ca.all.cover.bare_share_season.diff;
+    $("stats-title").textContent = `Validated on a 10-year rotation trial. Tested on ${nf} fields in ${prov} provinces.`;
+    $("stats-text").textContent = `FieldSense learned its rules on the Elora Research Station rotation plots, then read ${nf} farm fields it had never seen, `
+      + `from Alberta to Quebec, and checked itself against Canada's crop map.`
+      + (d && d.diff < 0 ? ` Diverse rotations left the soil bare ${-Math.round(100 * d.diff)} points less of the season.` : "");
+    const cardsCa = [
+      [nf, "", "farm fields tested across Canada"],
+      [prov, "", "provinces, each checked on its own"],
+      [Math.round((100 * t.agree) / t.checked), "%", `of crop-years read correctly vs. Canada's crop map (${t.agree}/${t.checked})`],
+      [1000, "", "possible 2027 seasons per location"],
+    ];
+    return countCards(cardsCa);
+  }
   const cards = [
     years && [years, "", "years of satellite pictures per field"],
     [1000, "", "possible next seasons simulated"],
@@ -942,6 +959,10 @@ async function renderStats(index) {
     accFarms != null ? [accFarms, "%", "of farm crop-years read correctly vs. Canada's crop map"]
       : accTrial != null ? [accTrial, "%", "of trial crop-years read correctly vs. field records"] : null,
   ].filter(Boolean);
+  return countCards(cards);
+}
+
+function countCards(cards) {
   const nodes = cards.map(([v, unit, lab]) => {
     const num = el("span", {}, "0");
     const card = el("div", { class: "stat-card" }, el("div", { class: "num" }, num, unit ? el("small", {}, unit) : ""), el("div", { class: "lab" }, lab));
