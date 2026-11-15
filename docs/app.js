@@ -610,6 +610,26 @@ function miniBarcode(bc, width = 300) {
   return c;
 }
 
+function climateBox(c) {
+  if (!c) return "";
+  const st = c.station, cor = c.correction || {}, sm = c.summary || {};
+  const stLine = st ? `Nearest Environment Canada station with a long record: ${st.name} (${st.km} km away). ` : "No usable station nearby: NASA POWER uncorrected. ";
+  const fix = [];
+  if (cor.rain) fix.push(`rain error on held-out years ${cor.rain.held_out_error_raw_pct}% → ${cor.rain.held_out_error_corrected_pct}%`);
+  if (cor.temperature) fix.push(`night temperature bias ${cor.temperature.bias_raw_c} → ${cor.temperature.bias_corrected_c} °C`);
+  const risks = Object.values(c.odds.risks).sort((a, b) => b.share - a.share);
+  return el("div", { class: "rd-climate" },
+    el("h4", {}, `Next season (${c.odds.target_year}) weather here`),
+    el("p", { class: "rd-sub" }, stLine, fix.length ? `Correction: ${fix.join("; ")}. ` : "", badge(c.evidence)),
+    el("p", { class: "rd-sum" }, `Typical year (${c.years[0]}–${c.years[1]}): ${Math.round(sm.annual_precip_mm)} mm of rain, ${Math.round(sm.gdd10_may_sep)} growing degree-days, ${Math.round(sm.frost_free_days)} frost-free days. Warming ${c.trend.c_per_decade} °C per decade (90% interval ${c.trend.low} to ${c.trend.high}).`),
+    el("div", { class: "rd-odds" }, ...risks.map((k) => el("div", { class: "rd-odd" },
+      el("div", { class: "rd-bar" }, el("span", { style: `width:${Math.round(100 * k.share)}%` })),
+      el("strong", {}, `${Math.round(100 * k.share)} in 100`), el("span", {}, nice(k.text)),
+      el("small", {}, ` (${k.past_years} past years)`)))),
+    el("p", { class: "rd-note" }, "Risk thresholds are rules of thumb for Ontario corn, soybean and wheat ", badge("assumed"),
+      ". Thresholds and rotation options for each province's own crops are the next step."));
+}
+
 async function renderCanada() {
   let data;
   try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { return; }
@@ -634,6 +654,7 @@ async function renderCanada() {
     const t = r.timing;
     detail.replaceChildren(
       el("div", { class: "rd-head" }, el("h3", {}, `${r.name} · ${r.place}`), el("p", { class: "rd-sub" }, `Main crops: ${r.system}. Crop timing read correctly in ${t.agree} of ${t.checked} field-years `, badge(t.evidence === "validated" ? "validated" : "modelled"))),
+      climateBox(r.climate),
       el("div", { class: "rd-fields" }, ...r.fields.map((f) => {
         const yrs = Object.keys(f.crops).map(Number).filter((y) => y >= f.barcode.years[0]).sort();
         return el("div", { class: `rd-field ${f.group}` },
@@ -645,7 +666,7 @@ async function renderCanada() {
       })));
   };
   for (const r of data.regions) {
-    const g = svg("g", { class: `cm-pin ${r.timing.evidence === "validated" ? "ok" : ""}`, tabindex: "0", role: "button", "aria-label": r.name });
+    const g = svg("g", { class: `cm-pin ${r.timing.evidence === "validated" ? "ok" : ""}${r.custom ? " custom" : ""}`, tabindex: "0", role: "button", "aria-label": r.name });
     const x = X(r.lon), y = Y(r.lat);
     g.append(svg("circle", { cx: x, cy: y, r: 16, class: "cm-halo" }), svg("circle", { cx: x, cy: y, r: 8, class: "cm-dot" }));
     const t1 = svg("text", { x, y: y - 26, "text-anchor": "middle", class: "cm-label" }); t1.textContent = r.name;
