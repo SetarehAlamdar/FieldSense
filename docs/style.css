@@ -476,3 +476,13 @@ table.scorecard { width: 100%; border-collapse: collapse; min-width: 760px; back
 .rd-bar span { display: block; height: 100%; background: var(--risk); }
 .rd-note { font-size: .82rem; color: var(--muted); margin: 10px 0 0; }
 .cm-label.small { font-size: 17px; }
+
+/* Seen from space: key moments */
+table.moments td { vertical-align: top; }
+.moment { margin: 0; }
+table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px; aspect-ratio: 1; object-fit: cover; border-radius: 10px; display: block; margin: 0 auto; }
+.moment figcaption { font-size: .82rem; color: var(--muted); margin-top: 6px; }
+.state { font-weight: 700; }
+.state.bare-soil { color: var(--simple); } .state.growing { color: var(--diverse); } .state.partly-green { color: var(--modelled); }
+.no-view { display: inline-block; padding: 40px 0; color: var(--muted); font-size: .85rem; }
+#farms-details { margin-top: 18px; }
