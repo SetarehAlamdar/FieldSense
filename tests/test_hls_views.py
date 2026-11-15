@@ -125,3 +125,17 @@ def test_showcase_picks_the_biggest_measured_difference():
                 3: prof([(2020, 90, 0.3), (2023, 20, 0.7)])}
     pick = hls_views.pick_showcase(profiles, {1: "simple", 2: "diverse", 3: "diverse"})
     assert (pick["simple"], pick["diverse"], pick["year"]) == (1, 3, 2023)     # 100 fewer bare days + 65 points
+
+
+
+def test_farm_grid_can_use_the_surroundings_view(tmp_path):
+    from pyproj import Transformer
+    to_ll = Transformer.from_crs("EPSG:32617", "EPSG:4326", always_xy=True).transform
+    square = lambda x, y, s: [to_ll(x, y), to_ll(x + s, y), to_ll(x + s, y + s), to_ll(x, y + s), to_ll(x, y)]
+    links = _write_granule(tmp_path, red=400, nir=3000, fmask=0)
+    found = [{"label": "Late May", "date": "2023-05-28", "links": links}]
+    meta = hls_views.add_plot_views(found, {1: square(X0 - 150, Y0 - 150, 300)}, tmp_path, key="farms",
+                                    prefix="farm", context_m=1000, size=120)
+    tile = meta["farms"]["rows"][0]["tiles"][0]
+    assert meta["farms"]["view"] == "context" and tile["green"].endswith(".jpg")
+    assert (tmp_path / tile["true"]).exists()
