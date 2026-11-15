@@ -1,0 +1,139 @@
+{
+ "fields": [
+  {
+   "id": "elora_plot_1",
+   "name": "Elora rotation plot 1",
+   "file": "plot_1.json",
+   "group": "Elora trial",
+   "rotation_design": "simple",
+   "current": "CSS"
+  },
+  {
+   "id": "elora_plot_2",
+   "name": "Elora rotation plot 2",
+   "file": "plot_2.json",
+   "group": "Elora trial",
+   "rotation_design": "simple",
+   "current": "CSS"
+  },
+  {
+   "id": "elora_plot_3",
+   "name": "Elora rotation plot 3",
+   "file": "plot_3.json",
+   "group": "Elora trial",
+   "rotation_design": "diverse",
+   "current": "SWC+covers"
+  },
+  {
+   "id": "elora_plot_4",
+   "name": "Elora rotation plot 4",
+   "file": "plot_4.json",
+   "group": "Elora trial",
+   "rotation_design": "diverse",
+   "current": "SWC+covers"
+  },
+  {
+   "id": "farm_1",
+   "name": "Farm field A",
+   "file": "farm_1.json",
+   "group": "Nearby farms",
+   "rotation_design": "simple",
+   "current": "SWC+covers"
+  },
+  {
+   "id": "farm_2",
+   "name": "Farm field B",
+   "file": "farm_2.json",
+   "group": "Nearby farms",
+   "rotation_design": "simple",
+   "current": "CSS"
+  },
+  {
+   "id": "farm_3",
+   "name": "Farm field C",
+   "file": "farm_3.json",
+   "group": "Nearby farms",
+   "rotation_design": "diverse",
+   "current": "SWC"
+  },
+  {
+   "id": "farm_4",
+   "name": "Farm field D",
+   "file": "farm_4.json",
+   "group": "Nearby farms",
+   "rotation_design": "diverse",
+   "current": "SWC+covers"
+  },
+  {
+   "id": "farm_5",
+   "name": "Farm field E",
+   "file": "farm_5.json",
+   "group": "Nearby farms",
+   "rotation_design": "diverse",
+   "current": "SWC+covers"
+  },
+  {
+   "id": "farm_6",
+   "name": "Farm field F",
+   "file": "farm_6.json",
+   "group": "Nearby farms",
+   "rotation_design": "diverse",
+   "current": "SWC"
+  }
+ ],
+ "figures": [
+  {
+   "file": "fig_living_cover.png",
+   "title": "Living cover outside the main crop season, all four plots",
+   "caption": "Share of off-season days with green plants, per year. Diverse rotations (plots 3-4) keep the soil covered far more often."
+  },
+  {
+   "file": "fig_climate_indicators.png",
+   "title": "Climate indicators, 1996-2025",
+   "caption": "Frost-free days, heat units, heat at corn pollination, heavy spring rain, summer dry spells and fall warmth, from corrected NASA POWER weather."
+  },
+  {
+   "file": "fig_rotation_calendars.png",
+   "title": "When each rotation keeps the soil green",
+   "caption": "Modelled from the crop calendar: green = growing plants, brown = bare soil, one row per year of the cycle."
+  }
+ ],
+ "highlights": [
+  {
+   "simple": 100,
+   "diverse": 64,
+   "big": "100% vs 64%",
+   "label": "Soil left bare when spring storms hit",
+   "note": "simple vs diverse rotation, seen by satellite since 2018",
+   "evidence": "measured"
+  },
+  {
+   "simple": 3,
+   "diverse": 39,
+   "big": "3% vs 39%",
+   "label": "Living cover outside the summer season",
+   "note": "simple vs diverse: roots protecting the soil in spring and fall",
+   "evidence": "measured"
+  },
+  {
+   "big": "26 in 100",
+   "label": "Springs with a heavy storm (25 mm+), next season (2027)",
+   "note": "from 1,000 possible seasons; it happened in 7 of 30 past years",
+   "evidence": "assumed"
+  },
+  {
+   "simple": 89,
+   "diverse": 73,
+   "big": "89% vs 73%",
+   "label": "Same pattern on 6 nearby farms",
+   "note": "soil bare in spring storms, simple vs diverse farm fields (rotation from Canada's crop map)",
+   "evidence": "measured"
+  },
+  {
+   "big": "Corn",
+   "label": "What comes next on the diverse plots (2027)",
+   "note": "read from their 3-year cycle, seen from space",
+   "evidence": "validated"
+  }
+ ]
+}
