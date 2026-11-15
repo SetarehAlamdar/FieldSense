@@ -67,3 +67,13 @@ def test_export_has_no_field_outlines(tmp_path):
     data = json.loads((tmp_path / "canada.json").read_text())
     assert data["regions"][0]["name"] == "Manitoba" and len(data["regions"][0]["fields"]) == 4
     assert "lonlat" not in json.dumps(data) and out["all"]["n_diverse"] == 2
+
+
+
+def test_export_never_writes_nan(tmp_path):
+    years = [2024, 2025]
+    m = pd.DataFrame(np.full((2, 365), np.nan), index=years, columns=range(1, 366))      # never seen
+    recs = {"mb": [ca.field_record(i, f"F{i}", g, {2024: 153}, m) for i, g in ((1, "simple"), (2, "diverse"))]}
+    ca.export_canada(recs, tmp_path / "c.json")
+    txt = (tmp_path / "c.json").read_text()
+    assert "NaN" not in txt and "Infinity" not in txt

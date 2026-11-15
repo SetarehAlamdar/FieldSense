@@ -632,8 +632,16 @@ function climateBox(c) {
 
 async function renderCanada() {
   let data;
-  try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { return; }
+  try { data = await (await fetch(DATA + "canada.json")).json(); } catch (e) { console.info("No canada.json:", e); return; }
   if (!data || !data.regions || !data.regions.length) return;
+  try { drawCanada(data); } catch (err) {
+    console.error(err);
+    show("canada-section");
+    $("canada-headline").textContent = `The Canada results could not be drawn (${err.message}). Please report this.`;
+  }
+}
+
+function drawCanada(data) {
   const P = (v) => (v == null ? "–" : `${Math.round(100 * v)}%`);
   const pair = (c) => el("span", { class: "sd" }, el("span", { class: "c-simple" }, P(c.simple)), " / ", el("span", { class: "c-diverse" }, P(c.diverse)));
   const diffTxt = (d) => (d ? `${d.diff > 0 ? "+" : ""}${Math.round(100 * d.diff)} pts (${Math.round(100 * d.lo)} to ${Math.round(100 * d.hi)})` : "too few fields");

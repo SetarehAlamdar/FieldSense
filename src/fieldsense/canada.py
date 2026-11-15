@@ -343,9 +343,23 @@ def export_canada(records_by_region, out_path, places=None, climate=None):
            "rule": f"Crop timing counts as validated in a region when at least {VALIDATED_FROM:.0%} of at least "
                    f"{MIN_CHECKS} field-years agree with the AAFC crop map (rule set before the results).",
            "source": "NASA HLS v2.0 greenness (30 m), AAFC Annual Crop Inventory"}
+    out = _no_nan(out)                                   # NaN is not valid JSON: browsers would refuse the file
     problems = check_public(out)
     if problems:
         raise ValueError(f"not safe to publish: {problems[:5]}")
     with open(out_path, "w") as fh:
-        json.dump(out, fh, separators=(",", ":"))
+        json.dump(out, fh, separators=(",", ":"), allow_nan=False)
     return out
+
+
+def _no_nan(x):
+    """Replace NaN/inf (anywhere in nested dicts/lists, incl. numpy numbers) with None."""
+    if isinstance(x, dict):
+        return {k: _no_nan(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_no_nan(v) for v in x]
+    if isinstance(x, (float, np.floating)):
+        return float(x) if np.isfinite(x) else None
+    if isinstance(x, np.integer):
+        return int(x)
+    return x
