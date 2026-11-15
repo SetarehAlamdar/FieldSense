@@ -20,6 +20,7 @@ const ROT_NAMES = {
 };
 
 let evidence = {};
+document.documentElement.classList.add("js");
 
 // ---------- small helpers
 const $ = (id) => document.getElementById(id);
@@ -559,6 +560,184 @@ function renderGaps(p) {
   show("gaps-section");
 }
 
+
+// =================================================================== landing layer
+// Aerial-looking patchwork of fields, drawn (not a photo), used behind the hero and the numbers band.
+function drawFields(canvas, seed = 7) {
+  if (!canvas) return;
+  const draw = () => {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    const c = canvas.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let r = seed;
+    const rnd = () => ((r = (r * 16807) % 2147483647) / 2147483647);
+    const COLS = ["#3f7d3a", "#5a9444", "#7aa84f", "#9cb860", "#c2c27a", "#b9a066", "#8f7650", "#4d8a46", "#6c9a3f", "#a8b86a"];
+    c.fillStyle = "#4b7d40"; c.fillRect(0, 0, w, h);
+    c.save();
+    c.translate(w / 2, h / 2); c.rotate(-0.33);
+    const span = Math.hypot(w, h);
+    let x = -span / 2;
+    while (x < span / 2) {
+      const colW = 90 + rnd() * 170;
+      let y = -span / 2;
+      while (y < span / 2) {
+        const fh = 60 + rnd() * 220;
+        const col = COLS[Math.floor(rnd() * COLS.length)];
+        c.fillStyle = col; c.fillRect(x, y, colW - 3, fh - 3);
+        c.strokeStyle = "rgba(255,255,255,.08)"; c.lineWidth = 1;          // crop rows
+        const vertical = rnd() < 0.5, step = 4 + rnd() * 3;
+        c.beginPath();
+        if (vertical) for (let k = x + step; k < x + colW - 3; k += step) { c.moveTo(k, y); c.lineTo(k, y + fh - 3); }
+        else for (let k = y + step; k < y + fh - 3; k += step) { c.moveTo(x, k); c.lineTo(x + colW - 3, k); }
+        c.stroke();
+        if (rnd() < 0.18) { c.fillStyle = "rgba(25,60,30,.55)"; c.fillRect(x - 2, y + fh - 6, colW + 2, 6); }   // hedgerow
+        y += fh;
+      }
+      x += colW;
+    }
+    c.restore();
+    c.strokeStyle = "rgba(230,225,200,.35)"; c.lineWidth = 3;           // a country road
+    c.beginPath(); c.moveTo(-20, h * 0.85); c.bezierCurveTo(w * 0.3, h * 0.55, w * 0.6, h * 0.95, w + 20, h * 0.35); c.stroke();
+  };
+  draw();
+  let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(draw, 150); });
+}
+
+function typeLoop(node, phrases) {
+  if (!node) return;
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { node.textContent = phrases[0]; return; }
+  let i = 0, n = phrases[0].length, deleting = false;
+  const tick = () => {
+    const p = phrases[i];
+    node.textContent = p.slice(0, n);
+    let wait = deleting ? 35 : 70;
+    if (!deleting && n === p.length) { deleting = true; wait = 1800; }
+    else if (deleting && n === 0) { deleting = false; i = (i + 1) % phrases.length; wait = 300; }
+    else n += deleting ? -1 : 1;
+    setTimeout(tick, wait);
+  };
+  setTimeout(tick, 1800);
+}
+
+function revealOnScroll() {
+  const items = document.querySelectorAll(".reveal");
+  if (!("IntersectionObserver" in window)) { items.forEach((x) => x.classList.add("in")); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.15 });
+  items.forEach((x, k) => { x.style.transitionDelay = `${(k % 4) * 90}ms`; io.observe(x); });
+  setTimeout(() => items.forEach((x) => x.classList.add("in")), 2500);     // never leave content hidden
+}
+
+function countUp(node, to, decimals = 0) {
+  const fmt = (v) => v.toLocaleString("en-CA", { maximumFractionDigits: decimals, minimumFractionDigits: decimals });
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { node.textContent = fmt(to); return; }
+  const t0 = performance.now(), dur = 1400;
+  const step = (t) => { const k = Math.min(1, (t - t0) / dur); node.textContent = fmt(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+// share of crop-years read correctly, from an evidence result like "... 8 of 8 ...; ... 53 of 58 ..."
+function accuracyFrom(id) {
+  const e = evidence[id];
+  if (!e || !e.result) return null;
+  const pairs = [...e.result.matchAll(/(\d+) of (\d+)/g)].map((m) => [+m[1], +m[2]]);
+  if (!pairs.length) return null;
+  const ok = pairs.reduce((a, p) => a + p[0], 0), all = pairs.reduce((a, p) => a + p[1], 0);
+  return all ? Math.round((100 * ok) / all) : null;
+}
+
+async function renderStats(index) {
+  const farms = index.fields.filter((f) => (f.group || "") === "Nearby farms").length;
+  let years = null;
+  try { years = (await getProfile(index.fields[0].file)).barcode.years.length; } catch (e) { years = null; }
+  const accFarms = accuracyFrom("hls_crop_history_farms"), accTrial = accuracyFrom("hls_crop_history");
+  const cards = [
+    years && [years, "", "years of satellite pictures per field"],
+    [1000, "", "possible 2026 seasons simulated"],
+    farms ? [farms, "", "nearby farm fields tested"] : [index.fields.length, "", "trial plots read from space"],
+    accFarms != null ? [accFarms, "%", "of farm crop-years read correctly vs. Canada's crop map"]
+      : accTrial != null ? [accTrial, "%", "of trial crop-years read correctly vs. field records"] : null,
+  ].filter(Boolean);
+  const nodes = cards.map(([v, unit, lab]) => {
+    const num = el("span", {}, "0");
+    const card = el("div", { class: "stat-card" }, el("div", { class: "num" }, num, unit ? el("small", {}, unit) : ""), el("div", { class: "lab" }, lab));
+    return { card, num, v };
+  });
+  $("stat-cards").replaceChildren(...nodes.map((x) => x.card));
+  const go = () => nodes.forEach((x) => countUp(x.num, x.v));
+  if (!("IntersectionObserver" in window)) return go();
+  const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { go(); io.disconnect(); } }, { threshold: 0.3 });
+  io.observe($("stat-cards"));
+}
+
+// The tablet in the hero: a simple and a diverse field playing through one year, on a loop.
+async function renderDevice(index) {
+  const box = $("dev-tiles"), dateEl = $("dev-date"), bar = $("dev-progress");
+  const still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dayOf = (iso) => { const t = new Date(iso + "T00:00:00Z"); return Math.round((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5); };
+  let tiles = [], year = null;
+  let tl = null;
+  try { tl = await (await fetch(DATA + "timeline.json")).json(); } catch (e) { tl = null; }
+  const pick = (list, key) => ["simple", "diverse"].map((d) => list.find((x) => x[key] === d)).filter(Boolean);
+  if (tl && tl.fields) {
+    const pair = pick(tl.fields.filter((f) => f.frames && f.frames.length), "design");
+    if (pair.length === 2) {
+      year = tl.year;
+      tiles = pair.map((f) => ({ design: f.design, name: f.name, frames: f.frames.map((x) => ({ ...x, d: dayOf(x.date) })) }));
+    }
+  }
+  if (!tiles.length) {                                   // fall back: colour from each field's greenness
+    const farms = index.fields.filter((f) => f.group === "Nearby farms");
+    const pair = pick(farms.length ? farms : index.fields, "rotation_design");
+    if (pair.length < 2) return;
+    const profs = await Promise.all(pair.map((f) => getProfile(f.file)));
+    const common = profs[0].barcode.years.filter((y) => profs[1].barcode.years.includes(y));
+    year = common.includes(2023) ? 2023 : common[common.length - 1];
+    tiles = profs.map((p, k) => {
+      const bc = p.barcode, r = bc.years.indexOf(year);
+      return { design: pair[k].rotation_design, name: pair[k].name.replace("Elora rotation ", "").replace(/^plot/, "Plot"),
+        vals: bc.values[r].map((v) => (v == null ? null : v / bc.scale)) };
+    });
+  }
+  const parts = tiles.map((t) => {
+    const img = t.frames ? el("img", { alt: "" }) : null, sw = t.frames ? null : el("div", { class: "swatch" }), cap = el("em");
+    box.append(el("div", { class: `dev-tile ${t.design}` }, el("b", {}, t.design), img || sw, cap));
+    return { t, img, sw, cap };
+  });
+  let day = 60, last = {};
+  const paint = () => {
+    dateEl.textContent = `${doyToDate(day + 1)} ${year}`;
+    bar.style.width = `${((day - 60) / (330 - 60)) * 100}%`;
+    for (const p of parts) {
+      if (p.img) {
+        let fr = p.t.frames[0];
+        for (const c of p.t.frames) { if (c.d <= day) fr = c; else break; }
+        const src = fr.true.startsWith("data:") ? fr.true : asset(fr.true);
+        if (last[p.t.name] !== src) { p.img.src = src; last[p.t.name] = src; }
+        p.cap.textContent = p.t.name;
+      } else {
+        let v = null;
+        for (let k = day; k >= Math.max(0, day - 20) && v == null; k--) v = p.t.vals[k];
+        p.sw.style.background = v == null ? "#24342b" : green(v);
+        p.cap.textContent = p.t.name;
+      }
+    }
+  };
+  if (still) { day = 200; paint(); return; }
+  paint();
+  setInterval(() => { day = day >= 330 ? 60 : day + 2; paint(); }, 55);
+}
+
+function renderLanding() {
+  drawFields($("hero-fields"), 7);
+  drawFields($("stats-fields"), 31);
+  typeLoop($("hero-type"), ["Protect your soil", "Plan for 2026 weather", "Choose your next crop", "Keep roots in the ground"]);
+  revealOnScroll();
+}
+renderLanding();
+
 // ---------- load
 async function loadField(entry, buttons) {
   buttons.forEach((b) => b.setAttribute("aria-pressed", b.dataset.file === entry.file ? "true" : "false"));
@@ -597,6 +776,8 @@ async function main() {
     renderHighlights(index.highlights);
     renderSpace();
     renderWatch(index);
+    renderDevice(index);
+    renderStats(index);
     $("loading").remove();
   } catch (err) {
     $("loading").textContent = "No field data found yet. Export the data with fieldsense.export.export_demo and add the files to docs/data/. " +
