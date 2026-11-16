@@ -856,9 +856,17 @@ function drawCanada(data) {
     const fewer = -Math.round(100 * d.diff);
     const provs = data.regions.filter((r) => !r.custom).length, where = data.regions.length > provs
       ? `${data.regions.length} locations in ${provs} provinces` : `${provs} provinces`;
+    const lower = data.regions.filter((r) => ((r.cover || {}).bare_share_season || {}).diff && r.cover.bare_share_season.diff.diff < 0);
+    const clear = data.regions.filter((r) => ((r.cover || {}).bare_share_season || {}).diff && r.cover.bare_share_season.diff.hi < 0).map((r) => r.name);
+    const each = lower.length === data.regions.length
+      ? ` Diverse fields were less bare in all ${data.regions.length} locations; the difference is clear on its own in ${clear.length ? clear.join(" and ") : "none of them"}, `
+        + `and elsewhere it is small enough to be chance with only 6–8 fields per location.`
+      : ` Diverse fields were less bare in ${lower.length} of ${data.regions.length} locations.`;
     $("canada-headline").replaceChildren(
       el("strong", {}, fewer > 0 ? `Across ${where}, diverse rotations leave the soil bare ${fewer} points less of the season` : `Across ${where}, no clear difference in bare days`),
-      ` (90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields). Crop timing read correctly in ${a.timing.agree} of ${a.timing.checked} field-years.`);
+      ` (90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields).${each} `
+      + `These are farms, not an experiment: the Elora trial is the test where the rotation is the only difference. `
+      + `Crop timing agreed with Canada's crop map in ${a.timing.agree} of ${a.timing.checked} field-years.`);
   }
   $("canada-rule").replaceChildren(data.source, " ", badge("measured"), ` · ${data.rule} Intervals resample fields, so few fields give wide intervals.`);
   select((data.regions.find((r) => r.region === "on") || data.regions[0]).region);
@@ -963,14 +971,15 @@ async function renderStats(index) {
   if (ca && ca.all && ca.all.timing && ca.all.timing.checked) {
     const nf = ca.all.n_simple + ca.all.n_diverse, prov = ca.regions.filter((r) => !r.custom).length;
     const t = ca.all.timing, d = ca.all.cover.bare_share_season.diff;
-    $("stats-title").textContent = `Validated on a 10-year rotation trial. Tested on ${nf} fields in ${prov} provinces.`;
-    $("stats-text").textContent = `FieldSense learned its rules on the Elora Research Station rotation plots, then read ${nf} farm fields it had never seen, `
-      + `from Alberta to Quebec, and checked itself against Canada's crop map.`
-      + (d && d.diff < 0 ? ` Diverse rotations left the soil bare ${-Math.round(100 * d.diff)} points less of the season.` : "");
+    $("stats-title").textContent = `Proven on a 10-year rotation experiment. Checked on ${nf} farm fields in ${prov} provinces.`;
+    $("stats-text").textContent = "At the Elora Research Station, both rotations grow side by side on the same land. Over 10 years, "
+      + "the diverse one kept living cover on 39% of off-season days, the simple one on 3%. "
+      + `Then FieldSense read ${nf} farm fields it had never seen, from Alberta to Quebec, and checked itself against Canada's crop map.`
+      + (d && d.diff < 0 ? ` Real farms show the same pattern: diverse fields were bare ${-Math.round(100 * d.diff)} points less of the season.` : "");
     const cardsCa = [
       [nf, "", "farm fields tested across Canada"],
       [prov, "", "provinces, each checked on its own"],
-      [Math.round((100 * t.agree) / t.checked), "%", `of crop-years read correctly vs. Canada's crop map (${t.agree}/${t.checked})`],
+      [Math.round((100 * t.agree) / t.checked), "%", `of crop-years agree with Canada's crop map (${t.agree}/${t.checked})`],
       [1000, "", "possible 2027 seasons per location"],
     ];
     return countCards(cardsCa);
@@ -979,8 +988,8 @@ async function renderStats(index) {
     years && [years, "", "years of satellite pictures per field"],
     [1000, "", "possible next seasons simulated"],
     farms ? [farms, "", "nearby farm fields tested"] : [index.fields.length, "", "trial plots read from space"],
-    accFarms != null ? [accFarms, "%", "of farm crop-years read correctly vs. Canada's crop map"]
-      : accTrial != null ? [accTrial, "%", "of trial crop-years read correctly vs. field records"] : null,
+    accFarms != null ? [accFarms, "%", "of farm crop-years agree with Canada's crop map"]
+      : accTrial != null ? [accTrial, "%", "of trial crop-years match the field records"] : null,
   ].filter(Boolean);
   return countCards(cards);
 }
