@@ -25,7 +25,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 130px; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 body { margin: 0; background: var(--bg); color: var(--ink); overflow-x: hidden;
   font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
 .wrap { max-width: 1140px; margin: 0 auto; padding: 0 16px; }
@@ -559,3 +559,27 @@ table.moments .moment img { image-rendering: auto; width: 100%; max-width: 220px
 .note-text { margin: 4px 0 10px; font-family: var(--display); font-weight: 500; font-size: clamp(1.05rem, 2vw, 1.25rem); line-height: 1.55; color: var(--ink); }
 .note-sig { margin: 0; color: var(--teal-deep); font-weight: 600; }
 @media (max-width: 640px) { .note { flex-direction: column; align-items: flex-start; } .note-pic { width: 120px; height: 120px; } }
+
+/* Questions first (answers follow down the page), then the satellite scene in How it works */
+.band.story { padding: 64px 0 52px; }
+.q-head { display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+.q-head .section-lede { margin-bottom: 0; }
+.q-farmer { width: 150px; height: auto; flex: none; }
+.q-bubble circle { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.q-bubble text { fill: var(--indigo); font: 700 30px Poppins, Inter, system-ui, sans-serif; }
+ol.q-cards { list-style: none; padding: 0; margin: 26px 0 0; grid-template-columns: repeat(4, 1fr); }
+ol.q-cards li { display: flex; }
+ol.q-cards .q-card { display: flex; flex-direction: column; gap: 8px; width: 100%; padding: 18px; }
+.q-card .q-n { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--teal); color: #fff;
+  font-family: var(--display); font-weight: 700; font-size: .95rem; }
+ol.q-cards .q-card b { font-size: 1.08rem; margin: 0; flex: 1; }
+ol.q-cards .q-card b::after { content: none; }
+.q-go { color: var(--teal-deep); font-weight: 600; font-size: .88rem; }
+.how-row { display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; align-items: center; margin: 4px 0 36px; }
+.how-text h3 { color: var(--indigo); font-size: 1.35rem; font-weight: 700; margin: 0 0 12px; }
+.how-text p { color: var(--muted); margin: 0 0 12px; }
+@media (max-width: 980px) { ol.q-cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 860px) { .how-row { grid-template-columns: 1fr; gap: 20px; } }
+@media (max-width: 560px) { ol.q-cards { grid-template-columns: 1fr; } .q-farmer { width: 96px; } .q-head { align-items: flex-start; } }
+.myfield .mf-text .kicker { color: var(--teal-deep); font-size: .95rem; margin: 0 0 2px; }
+@media (max-width: 560px) { .q-farmer { display: none; } }

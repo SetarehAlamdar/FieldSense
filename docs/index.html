@@ -56,23 +56,35 @@
     <svg class="hero-curve" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 L0 70 C 360 130 900 -10 1440 40 L1440 120 Z" /></svg>
   </header>
 
-  <section class="band story" id="questions">
-    <div class="wrap story-row">
-      <div class="story-text">
-        <p class="kicker">Every fall</p>
-        <h2 class="title">What should go on this field next year?</h2>
-        <p class="section-lede">Every fall, a farmer decides what goes on each field next year, and whether the soil will be bare when the spring storms come. NASA satellites have been watching every field in Canada for years. FieldSense turns each field's history into a barcode: brown when the soil is bare, green when roots are holding it.</p>
-        <div class="q-cards">
-          <a class="q-card" href="#myfield"><b>What should go on my field next year?</b><span>Click your field: its history from space, its 2027 weather, and which rotation and why.</span></a>
-          <a class="q-card" href="#watch-section"><b>Will my soil be bare when the spring storms come?</b><span>Watch a simple and a diverse field through a year of real satellite pictures.</span></a>
-          <a class="q-card" href="#odds-section"><b>Is next season risky?</b><span>1,000 possible 2027 seasons: late frost, heat, downpours on bare soil, dry spells.</span></a>
-          <a class="q-card" href="#proof"><b>Does a longer rotation really help?</b><span>The 10-year Elora experiment, and 42 real farms across Canada.</span></a>
+  <section class="band tint story" id="questions">
+    <div class="wrap">
+      <div class="q-head">
+        <div>
+          <p class="kicker">Every fall</p>
+          <h2 class="title">A farmer's big questions</h2>
+          <p class="section-lede">Every fall, a farmer decides what goes on each field next year, with lots of unknowns and only limited information. FieldSense answers these four questions, in order, as you scroll down.</p>
         </div>
+        <svg class="q-farmer" viewBox="40 150 150 190" aria-hidden="true">
+            <g class="q-bubble"><circle cx="150" cy="186" r="26"/><circle cx="124" cy="214" r="6"/><circle cx="114" cy="226" r="3.5"/><text x="150" y="196" text-anchor="middle">?</text></g>
+            <rect x="83" y="292" width="10" height="36" rx="3" fill="#34508a"/><rect x="97" y="292" width="10" height="36" rx="3" fill="#34508a"/>
+            <rect x="80" y="324" width="15" height="7" rx="3" fill="#5a3b22"/><rect x="96" y="324" width="15" height="7" rx="3" fill="#5a3b22"/>
+            <rect x="77" y="248" width="36" height="50" rx="10" fill="#b8443a"/>
+            <path d="M77 262h36M77 276h36M90 248v50M101 248v50" stroke="#8e2f28" stroke-width="2" opacity=".6"/>
+            <rect x="69" y="252" width="10" height="34" rx="5" fill="#b8443a"/><circle cx="74" cy="288" r="5" fill="#e0a982"/>
+            <rect x="111" y="252" width="10" height="22" rx="5" fill="#b8443a" transform="rotate(135 116 256)"/><circle cx="102" cy="243" r="5" fill="#e0a982"/>
+            <rect x="90" y="240" width="10" height="10" fill="#e0a982"/>
+            <circle cx="95" cy="228" r="15" fill="#e6b48f"/>
+            <path d="M80 224 a15 13 0 0 1 30 0 z" fill="#3f8a74"/><path d="M104 223 h16 a3 3 0 0 1 0 5 h-16 z" fill="#2f6b5a"/>
+            <circle cx="100" cy="230" r="1.8" fill="#2a2a35"/><circle cx="108" cy="230" r="1.8" fill="#2a2a35"/>
+            <path d="M100 237 h8" stroke="#a8524a" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
       </div>
-      <figure class="scene-card">
-        <div id="story-scene" class="story-scene"></div>
-        <figcaption id="scene-caption">A satellite passes every few days. Each clear look adds one stripe to the field's barcode.</figcaption>
-      </figure>
+      <ol class="q-cards">
+        <li><a class="q-card" href="#compare"><span class="q-n">1</span><b>Does a more diverse rotation really protect my soil?</b><span class="q-go">Answer: Simple vs diverse ↓</span></a></li>
+        <li><a class="q-card" href="#space-section" data-fallback="#watch-section"><span class="q-n">2</span><b>Will my soil be bare when the spring storms come?</b><span class="q-go">Answer: Seen from space ↓</span></a></li>
+        <li><a class="q-card" href="#myfield"><span class="q-n">3</span><b>What should go on my field next year?</b><span class="q-go">Answer: Try your own field ↓</span></a></li>
+        <li><a class="q-card" href="#odds-section"><span class="q-n">4</span><b>Is next season risky?</b><span class="q-go">Answer: Next season's odds ↓</span></a></li>
+      </ol>
     </div>
   </section>
 
@@ -80,6 +92,17 @@
     <div class="wrap">
       <p class="kicker">How it works</p>
       <h2 class="title">A decision tool built on evidence</h2>
+      <div class="how-row">
+        <figure class="scene-card">
+          <div id="story-scene" class="story-scene"></div>
+          <figcaption id="scene-caption">A satellite passes every few days. Each clear look adds one stripe to the field's barcode.</figcaption>
+        </figure>
+        <div class="how-text">
+          <h3>Every few days, a NASA satellite looks at every field</h3>
+          <p>Landsat and Sentinel-2 pass over every farm field in Canada every few days. FieldSense keeps every clear look and turns a field's history into a barcode: brown when the soil is bare, green when roots are holding it.</p>
+          <p>Clouds and snow hide the field, so those days stay grey. From when a field turns green, FieldSense reads which kind of crop grew there, and how many days the soil was left bare.</p>
+        </div>
+      </div>
       <div class="features">
         <a class="feature reveal" href="#barcode-section">
           <svg class="ficon" viewBox="0 0 48 48" aria-hidden="true"><rect x="17" y="17" width="14" height="14" rx="2" transform="rotate(45 24 24)" /><path d="M10 10l7 7M31 31l7 7M6 18l8-8M34 42l8-8" /><path d="M36 8a8 8 0 0 1 4 4M37 3a13 13 0 0 1 8 8" /></svg>
@@ -107,7 +130,7 @@
 
   <section class="band tint compare-top" id="compare">
     <div class="wrap">
-      <p class="kicker">The question</p>
+      <p class="kicker">Question 1</p>
       <h2 class="title">Simple or diverse rotation?</h2>
       <div class="versus" aria-label="The two rotations compared">
         <div class="rot simple">
@@ -128,7 +151,7 @@
 
   <section class="band space" id="space-section" hidden>
     <div class="wrap">
-      <p class="kicker">Seen from space</p>
+      <p class="kicker">Question 2 · Seen from space</p>
       <h2 class="title" id="space-title">The four plots, seen from space</h2>
       <p class="section-lede" id="space-lede"></p>
       <div class="space-toggle" role="group" aria-label="Picture type">
@@ -201,6 +224,7 @@
       <div class="region-detail" id="region-detail"></div>
       <div class="myfield" id="myfield">
         <div class="mf-text">
+          <p class="kicker">Question 3</p>
           <h3>Try your own field</h3>
           <p>Click on your field on the satellite map (or paste its location from Google Maps). FieldSense finds the field at that point and shows its history from space, its soil cover, next season's weather from the nearest station, and which rotation and why. The rotation choice covers corn, soybean and winter wheat for now; for other crops, like canola, spring wheat or pulses, you get the history, soil cover and 2027 weather, and those rotation options are the next step. It runs in our web app in about 5–10 minutes, with no login. Nothing is stored or published.</p>
           <p class="mf-alt">Prefer to run it yourself? Open the <a href="https://colab.research.google.com/github/SetarehAlamdar/FieldSense/blob/main/notebooks/FieldSense_My_Field.ipynb" target="_blank" rel="noopener">Colab notebook</a> (free <a href="https://urs.earthdata.nasa.gov/users/new">NASA Earthdata account</a> needed).</p>
@@ -254,6 +278,7 @@
     </section>
 
     <section id="odds-section" hidden>
+      <p class="kicker">Question 4</p>
       <h2>Next season (2027): what the weather could do</h2>
       <p class="section-lede">Out of 100 possible seasons, how many bring each risk.</p>
       <div class="odds-grid" id="odds-grid"></div>
