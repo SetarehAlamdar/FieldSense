@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/SetarehAlamdar/FieldSense/actions/workflows/tests.yml/badge.svg)](https://github.com/SetarehAlamdar/FieldSense/actions/workflows/tests.yml)
 
-**A field's past, read from NASA satellites and climate data, to choose its next crop rotation, anywhere in Canada, with the evidence behind every number.**
+**A field's past, read from NASA satellites and climate data, anywhere in Canada, to choose its next crop rotation, with the evidence behind every number.**
 
 NASA Space Apps Challenge 2026 · Team Star Farmer · Challenge: *Field Shift: Adapting Farms with NASA Data*
 
@@ -30,8 +30,10 @@ For a field anywhere in Canada, FieldSense:
 
 ## Results
 
-- **Elora Research Station** (10-year rotation trial, Ontario): the crops read from space match the field records; the diverse rotation had living cover on 39% of off-season days, the simple one on 3%.
-- **Across Canada:** 42 farm fields in 6 locations in Alberta, Saskatchewan, Manitoba, Ontario and Quebec. Crop timing agreed with the crop map in **177 of 210 field-years (84%)**; every location passed the rule set in advance (≥ 80%). Diverse fields were bare **7 points less** of the season (90% field-bootstrap interval 1 to 13). In Ontario and Quebec diversity adds off-season cover (winter wheat, hay); on the Prairies both groups are almost never green outside summer.
+- **Elora Research Station** (long-term rotation trial, Ontario): this is the experiment, where both rotations grow side by side on the same land, so the rotation is the only difference. Over 10 years read from space, the crops matched the field records, and the diverse rotation had living cover on 39% of off-season days, the simple one on 3%.
+- **Across Canada (real farms, not an experiment):** 42 farm fields in 6 locations in Alberta, Saskatchewan, Manitoba, Ontario and Quebec. Crop timing agreed with Canada's crop map in **177 of 210 field-years (84%)**; every location passed the rule set in advance (≥ 80%). The crop map is itself made from satellites, so this is agreement with the best map available, not ground truth. Diverse fields were bare **7 points less** of the season (90% field-bootstrap interval 1 to 13). They were less bare in all 6 locations, but the difference is clear on its own only in Saskatchewan and Ontario; elsewhere it is small enough to be chance with 6 to 8 fields per location (Ontario has only 2 simple fields). Farms that grow diverse rotations can also differ in other ways (livestock, soil), which is why the Elora experiment is the main evidence. In Ontario and Quebec diversity adds off-season cover (winter wheat, hay); on the Prairies both groups are almost never green outside summer.
+
+**What works where.** The field history, soil cover and 2027 weather odds work for any farm field on Canada's crop map. The rotation choice covers corn, soybean and winter wheat systems for now; for other crops (canola, spring cereals, pulses) the app says so instead of guessing, and those rotation options are the next step.
 
 How the data is produced and checked is described in [METHODS.md](METHODS.md).
 
