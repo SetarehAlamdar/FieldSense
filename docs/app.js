@@ -1182,10 +1182,25 @@ function farmerScene() {
   requestAnimationFrame(frame);
 }
 
+// Question cards: jump to the answer, just below the sticky menu, and correct once late content has loaded.
+function questionJumps() {
+  document.querySelectorAll(".q-card").forEach((a) => a.addEventListener("click", (e) => {
+    let target = document.querySelector(a.getAttribute("href"));
+    if ((!target || target.hidden) && a.dataset.fallback) target = document.querySelector(a.dataset.fallback);
+    if (!target || target.hidden) return;
+    e.preventDefault();
+    const off = () => { const nav = document.querySelector(".site-nav"); return (nav ? nav.getBoundingClientRect().height : 64) + 12; };
+    const go = (smooth) => window.scrollTo({ top: window.scrollY + target.getBoundingClientRect().top - off(), behavior: smooth ? "smooth" : "auto" });
+    go(true);
+    [900, 1800].forEach((ms) => setTimeout(() => { if (Math.abs(target.getBoundingClientRect().top - off()) > 24) go(false); }, ms));
+  }));
+}
+
 function renderLanding() {
   drawFields($("hero-fields"), 7);
   drawFields($("stats-fields"), 31);
   farmerScene();
+  questionJumps();
   typeLoop($("hero-type"), ["Protect your soil", "Plan for 2027 weather", "Choose your next crop", "Keep roots in the ground"]);
   revealOnScroll();
 }
