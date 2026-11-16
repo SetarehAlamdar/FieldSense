@@ -56,6 +56,26 @@
     <svg class="hero-curve" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 L0 70 C 360 130 900 -10 1440 40 L1440 120 Z" /></svg>
   </header>
 
+  <section class="band story" id="questions">
+    <div class="wrap story-row">
+      <div class="story-text">
+        <p class="kicker">Every fall</p>
+        <h2 class="title">What should go on this field next year?</h2>
+        <p class="section-lede">Every fall, a farmer decides what goes on each field next year, and whether the soil will be bare when the spring storms come. NASA satellites have been watching every field in Canada for years. FieldSense turns each field's history into a barcode: brown when the soil is bare, green when roots are holding it.</p>
+        <div class="q-cards">
+          <a class="q-card" href="#myfield"><b>What should go on my field next year?</b><span>Click your field: its history from space, its 2027 weather, and which rotation and why.</span></a>
+          <a class="q-card" href="#watch-section"><b>Will my soil be bare when the spring storms come?</b><span>Watch a simple and a diverse field through a year of real satellite pictures.</span></a>
+          <a class="q-card" href="#odds-section"><b>Is next season risky?</b><span>1,000 possible 2027 seasons: late frost, heat, downpours on bare soil, dry spells.</span></a>
+          <a class="q-card" href="#proof"><b>Does a longer rotation really help?</b><span>The 10-year Elora experiment, and 42 real farms across Canada.</span></a>
+        </div>
+      </div>
+      <figure class="scene-card">
+        <div id="story-scene" class="story-scene"></div>
+        <figcaption id="scene-caption">A satellite passes every few days. Each clear look adds one stripe to the field's barcode.</figcaption>
+      </figure>
+    </div>
+  </section>
+
   <section class="band" id="how">
     <div class="wrap">
       <p class="kicker">How it works</p>
@@ -157,7 +177,7 @@
   </section>
 
 
-  <section class="stats-band" aria-label="FieldSense in numbers">
+  <section class="stats-band" id="proof" aria-label="FieldSense in numbers">
     <canvas class="hero-fields" id="stats-fields" aria-hidden="true"></canvas>
     <div class="stats-shade" aria-hidden="true"></div>
     <div class="wrap stats-row">
@@ -295,6 +315,17 @@
       <ul class="gaps" id="gaps"></ul>
     </section>
   </main>
+
+  <section class="band note-band" id="why">
+    <div class="wrap note">
+      <img class="note-pic" src="img/setareh.jpg" width="160" height="160" alt="Cartoon of Setareh in a bucket hat and sunglasses, standing in front of crop rows under a star">
+      <div>
+        <p class="kicker">Why I built FieldSense</p>
+        <blockquote class="note-text">Satellites amaze me every time I think about them. Then I think about farmers, who weigh so many factors with only limited information, while they feed so many people. That is a huge responsibility, and we should help make it less overwhelming. Farms and satellites, isn't that a cool combination? So why not ask satellites for help with these big decisions?</blockquote>
+        <p class="note-sig">Setareh Alamdar · Team Star Farmer</p>
+      </div>
+    </div>
+  </section>
 
   <section class="cta-band">
     <div class="wrap cta-row">

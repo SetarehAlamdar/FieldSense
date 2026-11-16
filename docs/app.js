@@ -863,8 +863,8 @@ function drawCanada(data) {
         + `and elsewhere it is small enough to be chance with only 6–8 fields per location.`
       : ` Diverse fields were less bare in ${lower.length} of ${data.regions.length} locations.`;
     $("canada-headline").replaceChildren(
-      el("strong", {}, fewer > 0 ? `Across ${where}, diverse rotations leave the soil bare ${fewer} points less of the season` : `Across ${where}, no clear difference in bare days`),
-      ` (90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields).${each} `
+      el("strong", {}, fewer > 0 ? `Across ${where}, diverse rotations leave the soil bare about ${-Math.round(SEASON_DAYS * d.diff)} fewer days a season` : `Across ${where}, no clear difference in bare days`),
+      ` (March to November: ${fewer} points less of the season, 90% interval ${-Math.round(100 * d.hi)} to ${-Math.round(100 * d.lo)} points, ${a.n_simple} simple vs ${a.n_diverse} diverse fields).${each} `
       + `These are farms, not an experiment: the Elora trial is the test where the rotation is the only difference. `
       + `Crop timing agreed with Canada's crop map in ${a.timing.agree} of ${a.timing.checked} field-years.`);
   }
@@ -961,6 +961,8 @@ function accuracyFrom(id) {
   return all ? Math.round((100 * ok) / all) : null;
 }
 
+const SEASON_DAYS = 275;   // 1 Mar - 30 Nov, the season of canada.cover_numbers
+
 async function renderStats(index) {
   const farms = index.fields.filter((f) => (f.group || "") === "Nearby farms").length;
   let years = null;
@@ -975,7 +977,7 @@ async function renderStats(index) {
     $("stats-text").textContent = "At the Elora Research Station, both rotations grow side by side on the same land. Over 10 years, "
       + "the diverse one kept living cover on 39% of off-season days, the simple one on 3%. "
       + `Then FieldSense read ${nf} farm fields it had never seen, from Alberta to Quebec, and checked itself against Canada's crop map.`
-      + (d && d.diff < 0 ? ` Real farms show the same pattern: diverse fields were bare ${-Math.round(100 * d.diff)} points less of the season.` : "");
+      + (d && d.diff < 0 ? ` Real farms show the same pattern: diverse fields were bare about ${-Math.round(SEASON_DAYS * d.diff)} fewer days a season (March to November).` : "");
     const cardsCa = [
       [nf, "", "farm fields tested across Canada"],
       [prov, "", "provinces, each checked on its own"],
@@ -1066,9 +1068,124 @@ async function renderDevice(index) {
   setInterval(() => { day = day >= 330 ? 60 : day + 2; paint(); }, 55);
 }
 
+
+// ---------- The farmer's question: a satellite passes, and the field's barcode fills in, stripe by stripe.
+// An illustration of how FieldSense works (not real data): a simple and a diverse field through a typical year.
+function farmerScene() {
+  const box = $("story-scene");
+  if (!box) return;
+  const NS = "http://www.w3.org/2000/svg";
+  const STATES = {
+    s: { field: "var(--snow)", cell: null }, c: { field: null, cell: null },
+    b: { field: "#a77b4f", cell: "#9a6a3a" }, l: { field: "#9fd08f", cell: "#8fc98a" },
+    g: { field: "#3f8a4a", cell: "#2f6b34" }, h: { field: "#d4b25e", cell: "#c9a04a" },
+  };
+  const ROWS = [
+    { name: "Simple rotation", seq: "scsssbbcbblggcgghhbbbcss",
+      text: "Simple rotation (corn, soybean): the soil stays bare from spring until June, and again after harvest." },
+    { name: "Diverse rotation", seq: "scssslgcgggghlgcgggllcss",
+      text: "Diverse rotation (winter wheat, then clover): green in spring and again after harvest. Same satellites, a very different barcode." },
+  ];
+  const END = "Two fields, two barcodes (an illustration of a typical year). FieldSense reads the real barcode of any field in Canada from every clear NASA satellite pass.";
+  const X0 = 128, CW = 15.5, CH = 17, RY = [356, 382];
+  const cells = [], months = "JFMAMJJASOND";
+  let svg = `<svg viewBox="0 0 520 430" role="img" aria-label="Illustration: a farmer stands by a field while a satellite passes overhead; each clear pass adds one stripe to the field's barcode">
+    <rect class="sc-sky" x="0" y="0" width="520" height="250"/>
+    <rect class="sc-sky2" x="0" y="170" width="520" height="80" opacity=".7"/>
+    <g fill="#fff" opacity=".75"><ellipse cx="80" cy="120" rx="26" ry="9"/><ellipse cx="98" cy="113" rx="16" ry="9"/><ellipse cx="430" cy="140" rx="24" ry="8"/><ellipse cx="446" cy="134" rx="14" ry="8"/></g>
+    <path class="sc-orbit" d="M-40 78 Q 260 -20 560 78"/>
+    <path class="sc-hill" d="M0 236 C 90 206 170 214 250 230 C 330 212 430 206 520 230 L520 250 L0 250 Z"/>
+    <rect class="sc-ground" x="0" y="240" width="520" height="100"/>
+    <polygon id="sc-beam" points="0,0 0,0 0,0" fill="#ffe08a" opacity="0"/>
+    <polygon id="sc-field" points="200,248 460,248 498,326 160,326" fill="#a77b4f"/>
+    <g stroke="rgba(0,0,0,.13)" stroke-width="2">${Array.from({ length: 9 }, (_, i) => {
+      const a = 200 + (i + 1) * 26, b = 160 + (i + 1) * 33.8; return `<line x1="${a}" y1="248" x2="${b}" y2="326"/>`; }).join("")}</g>
+    <g id="sc-cloud" opacity="0"><ellipse cx="330" cy="168" rx="46" ry="15" fill="#fff"/><ellipse cx="306" cy="160" rx="24" ry="14" fill="#fff"/><ellipse cx="350" cy="156" rx="28" ry="17" fill="#fff"/><ellipse cx="330" cy="172" rx="50" ry="10" fill="#e8edf3"/></g>
+    <g id="sc-sat">
+      <rect x="-25" y="-5" width="16" height="10" rx="1.5" fill="#3b63b5"/><rect x="9" y="-5" width="16" height="10" rx="1.5" fill="#3b63b5"/>
+      <path d="M-21 -5v10M-17 -5v10M-13 -5v10M13 -5v10M17 -5v10M21 -5v10" stroke="#8fb0ea" stroke-width="1"/>
+      <path d="M-9 0h4M5 0h4" stroke="#9aa0b5" stroke-width="2"/>
+      <rect x="-6" y="-7" width="12" height="14" rx="2" fill="#d9dbe4" stroke="#9aa0b5"/><circle cx="0" cy="9" r="2.4" fill="#5aa58f"/>
+    </g>
+    <g id="sc-farmer">
+      <rect x="83" y="292" width="10" height="36" rx="3" fill="#34508a"/><rect x="97" y="292" width="10" height="36" rx="3" fill="#34508a"/>
+      <rect x="80" y="324" width="15" height="7" rx="3" fill="#5a3b22"/><rect x="96" y="324" width="15" height="7" rx="3" fill="#5a3b22"/>
+      <rect x="77" y="248" width="36" height="50" rx="10" fill="#b8443a"/>
+      <path d="M77 262h36M77 276h36M90 248v50M101 248v50" stroke="#8e2f28" stroke-width="2" opacity=".6"/>
+      <rect x="69" y="252" width="10" height="34" rx="5" fill="#b8443a"/><circle cx="74" cy="288" r="5" fill="#e0a982"/>
+      <g id="sc-arm"><rect x="111" y="252" width="10" height="34" rx="5" fill="#b8443a"/><circle cx="116" cy="288" r="5" fill="#e0a982"/></g>
+      <rect x="90" y="240" width="10" height="10" fill="#e0a982"/>
+      <circle cx="95" cy="228" r="15" fill="#e6b48f"/>
+      <path d="M80 224 a15 13 0 0 1 30 0 z" fill="#3f8a74"/><path d="M104 223 h16 a3 3 0 0 1 0 5 h-16 z" fill="#2f6b5a"/>
+      <circle cx="100" cy="230" r="1.8" fill="#2a2a35"/><circle cx="108" cy="230" r="1.8" fill="#2a2a35"/>
+      <path d="M99 236 q5 4 10 0" stroke="#a8524a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    </g>`;
+  ROWS.forEach((r, i) => {
+    svg += `<text class="sc-label" x="${X0 - 8}" y="${RY[i] + 12}" text-anchor="end">${r.name}</text>`;
+    for (let k = 0; k < 24; k++) svg += `<rect id="sc-c${i}-${k}" x="${X0 + k * CW}" y="${RY[i]}" width="${CW - 1.5}" height="${CH}" rx="2" fill="none" stroke="var(--line)"/>`;
+  });
+  for (let m = 0; m < 12; m++) svg += `<text class="sc-axis" x="${X0 + (2 * m + 1) * CW - 0.75}" y="${RY[1] + CH + 13}" text-anchor="middle">${months[m]}</text>`;
+  svg += `<g font-size="9.5" font-family="Inter, system-ui, sans-serif" fill="var(--muted)">
+    <rect x="${X0}" y="${RY[1] + CH + 21}" width="9" height="9" rx="2" fill="#9a6a3a"/><text x="${X0 + 13}" y="${RY[1] + CH + 29}">bare soil</text>
+    <rect x="${X0 + 72}" y="${RY[1] + CH + 21}" width="9" height="9" rx="2" fill="#2f6b34"/><text x="${X0 + 85}" y="${RY[1] + CH + 29}">growing</text>
+    <rect x="${X0 + 140}" y="${RY[1] + CH + 21}" width="9" height="9" rx="2" fill="#c9a04a"/><text x="${X0 + 153}" y="${RY[1] + CH + 29}">ripe</text>
+    <rect x="${X0 + 190}" y="${RY[1] + CH + 21}" width="9" height="9" rx="2" class="sc-none"/><text x="${X0 + 203}" y="${RY[1] + CH + 29}">no clear view (cloud, snow)</text></g></svg>`;
+  box.innerHTML = svg;
+  const q = (id) => box.querySelector("#" + id);
+  const field = q("sc-field"), beam = q("sc-beam"), sat = q("sc-sat"), cloud = q("sc-cloud"), arm = q("sc-arm"), cap = $("scene-caption");
+  const pos = (t) => [(1 - t) ** 2 * -40 + 2 * (1 - t) * t * 260 + t * t * 560, (1 - t) ** 2 * 78 + 2 * (1 - t) * t * -20 + t * t * 78];
+  const paintCell = (row, k) => {
+    const st = STATES[ROWS[row].seq[k]], c = q(`sc-c${row}-${k}`);
+    c.removeAttribute("stroke");
+    if (st.cell) c.setAttribute("fill", st.cell); else { c.removeAttribute("fill"); c.setAttribute("class", "sc-none"); }
+    if (st.field) field.setAttribute("fill", st.field);
+  };
+  const clearRows = () => box.querySelectorAll("[id^=sc-c]").forEach((c) => { c.removeAttribute("class"); c.setAttribute("fill", "none"); c.setAttribute("stroke", "var(--line)"); });
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce) {
+    ROWS.forEach((_, i) => { for (let k = 0; k < 24; k++) paintCell(i, k); });
+    field.setAttribute("fill", STATES.g.field);
+    const [x, y] = pos(0.5); sat.setAttribute("transform", `translate(${x} ${y})`);
+    cap.textContent = END;
+    return;
+  }
+  const PASS = 1000, ROW_PAUSE = 1600, END_PAUSE = 4200;
+  let row = 0, k = 0, t0 = null, painted = false, pauseUntil = 0, visible = true, last = 0;
+  cap.textContent = ROWS[0].text;
+  if ("IntersectionObserver" in window) new IntersectionObserver((es) => { visible = es.some((e) => e.isIntersecting); }, { threshold: 0.1 }).observe(box);
+  const frame = (now) => {
+    requestAnimationFrame(frame);
+    if (!visible) { if (t0 !== null) t0 += now - last; if (pauseUntil) pauseUntil += now - last; last = now; return; }
+    last = now;
+    if (pauseUntil) {
+      if (now < pauseUntil) return;
+      pauseUntil = 0; t0 = now;
+      if (row >= ROWS.length) { row = 0; clearRows(); }
+      cap.textContent = ROWS[row].text;
+    }
+    if (t0 === null) t0 = now;
+    const t = Math.min(1, (now - t0) / PASS), [x, y] = pos(t);
+    sat.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${((t - 0.5) * 24).toFixed(1)})`);
+    const ch = ROWS[row].seq[k], cloudy = ch === "c";
+    const on = t > 0.36 && t < 0.64, a = on ? Math.sin(((t - 0.36) / 0.28) * Math.PI) : 0;
+    const bottom = cloudy ? 160 : 248, left = cloudy ? 296 : 200, right = cloudy ? 364 : 460;
+    beam.setAttribute("points", `${x.toFixed(1)},${(y + 8).toFixed(1)} ${left},${bottom} ${right},${bottom}`);
+    beam.setAttribute("opacity", (0.45 * a).toFixed(2));
+    cloud.setAttribute("opacity", cloudy ? Math.min(1, Math.sin(t * Math.PI) * 1.6).toFixed(2) : "0");
+    arm.setAttribute("transform", `rotate(${(-150 * a).toFixed(1)} 116 256)`);
+    if (!painted && t >= 0.5) { paintCell(row, k); painted = true; }
+    if (t >= 1) {
+      painted = false; t0 = now; k += 1;
+      if (k >= 24) { k = 0; row += 1; pauseUntil = now + (row >= ROWS.length ? END_PAUSE : ROW_PAUSE); if (row >= ROWS.length) cap.textContent = END; }
+    }
+  };
+  requestAnimationFrame(frame);
+}
+
 function renderLanding() {
   drawFields($("hero-fields"), 7);
   drawFields($("stats-fields"), 31);
+  farmerScene();
   typeLoop($("hero-type"), ["Protect your soil", "Plan for 2027 weather", "Choose your next crop", "Keep roots in the ground"]);
   revealOnScroll();
 }
