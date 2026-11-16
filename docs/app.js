@@ -1189,7 +1189,11 @@ function questionJumps() {
     if ((!target || target.hidden) && a.dataset.fallback) target = document.querySelector(a.dataset.fallback);
     if (!target || target.hidden) return;
     e.preventDefault();
-    const off = () => { const nav = document.querySelector(".site-nav"); return (nav ? nav.getBoundingClientRect().height : 64) + 12; };
+    const off = () => {
+      const nav = document.querySelector(".site-nav"), tabs = document.querySelector(".tabs-bar");
+      const below = tabs && target.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_PRECEDING;   // the field tabs stick above it
+      return (nav ? nav.getBoundingClientRect().height : 64) + (below ? tabs.getBoundingClientRect().height : 0) + 12;
+    };
     const go = (smooth) => window.scrollTo({ top: window.scrollY + target.getBoundingClientRect().top - off(), behavior: smooth ? "smooth" : "auto" });
     go(true);
     [900, 1800].forEach((ms) => setTimeout(() => { if (Math.abs(target.getBoundingClientRect().top - off()) > 24) go(false); }, ms));
