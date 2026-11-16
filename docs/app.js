@@ -229,7 +229,8 @@ function renderRotations(p) {
   for (const [k, v] of Object.entries(ro.robustness_best_share || {})) {
     const bar = el("div", { class: "bar" }, el("span"));
     bar.firstChild.style.width = `${100 * v}%`;
-    rb.append(el("div", { class: "bar-row" }, el("span", {}, ROT_NAMES[k] || k), bar, el("span", {}, pct(v))));
+    const label = v === 0 ? "never best" : v < 0.005 ? "under 1%" : pct(v);   // 0% means always beaten, not missing data
+    rb.append(el("div", { class: "bar-row" }, el("span", {}, ROT_NAMES[k] || k), bar, el("span", {}, label)));
   }
   $("not-included").replaceChildren(
     el("span", { class: "dot measured" }), " Soil cover for this field's current rotation is ", badge("measured"), ` by satellite${ro.measured_since ? " since " + ro.measured_since : ""}. `,
